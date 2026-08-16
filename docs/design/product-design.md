@@ -2,6 +2,12 @@
 
 日期：2026-07-08
 
+## 文档状态
+
+这份文档形成于正式 Core 实现之前，保留了早期产品路线和验收设想。2026-08-16 的实际状态是：Stage 3 离线同步核心已经完成，候选项目专项审查也已结束，但真实小红书接入、通用输入转换和 AI 分类流水线仍未完成。
+
+已落地的数据、状态机、输出和安全契约以 [Core 实现规格](../../projects/rednote-sync-core/docs/sync-core.md) 为准。本文件继续描述产品意图和历史方案，不用旧的数据结构覆盖现有实现。下一步方向尚未决定，应先讨论离线输入桥接、Stage 4 在线适配器、AI 分类原型和使用体验中哪一个优先。
+
 ## 背景
 
 用户在小红书上通过点赞和收藏标记了大量高价值帖子，但信息流产品形态容易分散注意力，导致这些内容很难被后续认真阅读、查询和复用。
@@ -39,20 +45,22 @@
 - 不把 Cookie 或完整 `xsec_token` URL 写进公开文档。
 - 不把 Notion 作为主数据库。
 
-## 推荐产品路线
+## 早期推荐产品路线
 
-当前推荐路线是：
+最初推荐的候选路线是：
 
 ```text
 Userscript 元数据采集器 + 本地处理器 + Markdown/Obsidian 知识库
 ```
 
-原因：
+当时的原因：
 
 - 现有 userscript 已经能抓到点赞和收藏列表里的元数据。
 - `XHS-Downloader` 初步验证可以补全帖子详情并下载媒体。
 - 自定义转换层可以把下载器产物转换成适合知识库使用的 Markdown 和索引。
 - 这个路线比直接做完整浏览器插件更小、更适合第一版验证。
+
+这条路线现在只保留为一种可选输入链，不再是已经确定的当前方案。专项审查认为 XHS-Downloader 适合做行为和数据契约参考，但不建议直接嵌入其源码；现有 Core 也已经独立实现了本地状态、对象存储和知识库投影。
 
 ## 风控与安全原则
 
@@ -98,11 +106,9 @@ XHS-Downloader V2.8 Beta
 - 标签保存在 `作品标签` 字段。
 - 作者、发布时间、互动数据、作品链接和下载地址也被保存。
 
-结论：
+这次测试只能证明当时的一个图文小样本可用，不能证明当前版本、其他账号、视频、Live Photo 或批量同步稳定。XHS-Downloader 仍可作为详情和媒体行为的参考或外部候选输入，但是否进入实际产品链路尚未决定。完整专项结论见 [XHS-Downloader 审查](../../research/xhs-downloader/review.md)。
 
-`XHS-Downloader` 可以作为第一版的“详情补全 + 图片/视频下载组件”，但它不是最终知识库生成器。项目还需要一个自定义转换层。
-
-## 第一版数据流
+## 早期候选数据流
 
 ```text
 小红书网页
@@ -122,6 +128,7 @@ XHS-Downloader V2.8 Beta
 现有脚本：
 
 - `prototypes/tampermonkey/xiaohongshu-like-export.user.js`
+- `prototypes/tampermonkey/xiaohongshu-like-export-json.user.js`
 - `prototypes/tampermonkey/xiaohongshu-collection-export.user.js`
 
 当前职责：
@@ -129,18 +136,18 @@ XHS-Downloader V2.8 Beta
 - 在用户正常登录和浏览小红书时运行。
 - 捕获点赞和收藏列表接口返回。
 - 记录 `note_id`、`xsec_token`、标题、作者、封面、互动数据等元数据。
-- 支持导出 Excel。
+- 点赞和收藏脚本支持导出 Excel；点赞另有 JSON 原型。
 
 后续建议：
 
 - 将点赞和收藏脚本合并成一个统一脚本。
-- 增加 JSON 导出。
+- 为收藏补充 JSON 导出，并统一版本化输出格式。
 - 每条记录标记来源：`liked`、`collected`、`posted`。
 - 导出时保留完整 token URL 作为私有处理输入，但知识库输出时去掉 `xsec_token`。
 
 ### 2. 详情与媒体下载器
 
-第一版使用 `XHS-Downloader`。
+早期方案假设第一版使用 `XHS-Downloader`。这不是当前已经采用的决定；后续可以讨论继续把它当作外部输入、独立实现在线适配器，或先只做离线桥接。
 
 职责：
 
@@ -151,11 +158,10 @@ XHS-Downloader V2.8 Beta
 - 将详情写入 SQLite。
 - 将媒体保存到本地文件夹。
 
-已验证能力：
+已有证据：
 
-- 能获取标题、正文、标签、作者、发布时间、互动数据。
-- 能下载图文帖子图片。
-- 支持命令行、API 和 MCP 模式。
+- `[本地验证]` 一个较新的图文小样本取得了标题、正文、标签、作者、时间、互动数据和图片，并写入 SQLite。
+- `[静态证据]` 固定 revision 审查确认项目包含图片、视频、Live Photo、SQLite、命令行、API 与 MCP 等实现面；这不等于这些能力已由本项目动态验证。
 
 待验证能力：
 
@@ -171,23 +177,21 @@ XHS-Downloader V2.8 Beta
 
 ### 3. 知识库转换器
 
-这是第一版需要自定义实现的核心组件。
+早期方案设想直接读取 `ExploreData.db` 并生成知识库。现在 Rednote Sync Core 已经实现 canonical SQLite/object store，以及 Markdown、JSON、CSV、媒体、失败和运行记录投影；尚缺的是把 userscript 或 XHS-Downloader 等外部数据安全转换成 `offline-input-v1` 的输入桥接。
 
-职责：
+如果继续走 XHS-Downloader 输入路线，桥接层的职责是：
 
 - 读取 `XHS-Downloader` 的 `ExploreData.db`。
 - 找到对应的图片和视频文件。
-- 每篇帖子生成一个 Markdown 文件。
-- 生成本地媒体引用。
-- 生成 `index.json` 和 `index.csv`。
-- 记录失败任务，避免静默丢失。
-- 支持重复运行，同一 `note_id` 不重复生成。
+- 将外部字段、来源关系、详情结果和媒体映射为版本化的 `offline-input-v1`。
+- 区分原始输入、短期访问材料、公开 URL、真实缺失和处理失败。
+- 让现有 Core 负责幂等同步、失败记录、对象存储和派生视图，不另建一套平行状态机。
 
-第一版建议先做命令行转换器，不做 GUI。
+是否优先实现这层桥接，需要与在线适配器和 AI 分类原型一起讨论。
 
 ## 本地知识库目录结构
 
-建议输出结构：
+下面是早期建议结构，用于表达产品希望提供的可读文件。当前 Core 的实际路径使用 account/note digest，并以 SQLite 与不可变对象为事实源，详见 [Core README](../../projects/rednote-sync-core/README.md#理解输出)。
 
 ```text
 rednote-knowledge/
@@ -335,7 +339,7 @@ AI 预留字段：
 - `last_attempt_at`
 - `next_action`
 
-第一版可以用 JSON 文件保存任务状态，不需要先做复杂数据库。
+早期曾考虑用 JSON 保存任务状态。当前 Core 已采用 SQLite 保存规范状态，JSON 只作为可重建派生视图，不应再新增平行的 JSON 状态源。
 
 ## AI Agent 集成方向
 
@@ -352,16 +356,13 @@ AI 不进入第一版关键路径。第一版先保证可导出、可打开、�
 - 向量化和语义搜索。
 - 基于本地知识库的问答。
 
-AI 流程应读取本地 Markdown/JSON，并将结果写回 Markdown 或 sidecar JSON。
+AI 流程应读取本地 canonical 内容包或派生输入，并把结果写入独立 sidecar JSON。
 
-默认建议：
+Markdown 可以展示经过选择的 AI 结果，但不作为分类事实的唯一存储。sidecar 需要记录 provider、model、prompt、taxonomy 和内容包版本，具体方案见 [AI 分类设计](ai-classification.md)。
 
-- 第一阶段 AI 结果写回 Markdown，方便人读。
-- 后续如果接 RAG，再额外维护 JSON/向量索引。
+## 早期第一版验收设想
 
-## 第一版验收标准
-
-第一版完成标准：
+这些标准仍能帮助讨论产品价值，但尚未作为当前阶段的正式验收门：
 
 - 能从现有 userscript 导出点赞和收藏元数据。
 - 能把一小批新鲜帖子 URL 交给 `XHS-Downloader` 处理。
@@ -377,22 +378,23 @@ AI 流程应读取本地 Markdown/JSON，并将结果写回 Markdown 或 sidecar
 - 如果视频下载成功，Markdown 引用本地视频文件。
 - 如果视频下载失败，Markdown 仍保留正文、封面、元数据和失败原因。
 
-## 默认决策
+## 早期默认决策及当前状态
 
-为避免第一版范围发散，采用以下默认决策：
+这些决定形成于 Stage 3 实现之前，目前状态如下：
 
-- Userscript 下一步优先增加 JSON 导出，同时保留 Excel。
-- 转换器第一版直接读取 `XHS-Downloader` SQLite，不先接 API 模式。
-- 最终知识库默认输出到项目内 `rednote-knowledge/`，后续再允许配置到 Obsidian Vault。
-- AI 摘要第一版不生成，只预留字段和章节。
-- 私有 raw 数据可以保留完整 token URL 用于本地重试，但 Markdown 和 CSV 默认去除 token。
+- 点赞已有 JSON 原型，收藏仍只有 Excel；是否统一 userscript 需要继续讨论。
+- 直接读取 XHS-Downloader SQLite 的转换器尚未实现，也不再视为唯一下一步。
+- Core 已采用私有同步 root、account digest 路径、SQLite/object canonical state 和可重建派生视图，不再使用早期固定的 `rednote-knowledge/` 结构作为规范。
+- AI 摘要与分类仍未实现；当前设计要求写入独立派生 sidecar，而不是污染原始归档。
+- Markdown、CSV 和日志不得保存 Cookie 或完整 token URL；私有访问材料未来也必须进入明确的 secret 边界，不能仅以“raw 数据”名义长期保留。
 
-## 推荐下一步
+## 下一步讨论
 
-下一步实现目标应收敛为：
+目前没有预先选定的实现任务。可以围绕以下方向比较价值、风险和完成标准：
 
-```text
-ExploreData.db + 已下载媒体文件夹 -> Markdown notes + assets + index.json + index.csv
-```
+1. 将 userscript JSON 或 XHS-Downloader SQLite/媒体桥接到 `offline-input-v1`。
+2. 设计并小范围验证 Stage 4 专用浏览器在线适配器。
+3. 使用合成或脱敏内容包实现 AI 分类原型。
+4. 先定义启动、进度、失败处理和知识库浏览体验，再决定 CLI、Obsidian、浏览器插件或桌面应用。
 
-这一步能最快把已经验证成功的 `XHS-Downloader` 输出变成真正可用的本地知识库，也避免在第一版中过早重写下载器或开发完整插件。
+下一位 agent 应先理解现有实现和这些分叉，与用户讨论后再确定一个最小实现切片。

@@ -4,7 +4,7 @@
 
 ## 入口
 
-- [项目使命](mission.md)：AI 分类流程的目标、成功标准和边界。
+- [项目使命](mission.md)：整个项目的目标、当前状态、原则和近期边界。
 - [设计文档](design/README.md)：路线图、产品设计和 AI 分类方案。
 - [Core 技术文档](../projects/rednote-sync-core/docs/sync-core.md)：当前离线核心的实现契约。
 - [候选项目调研](../research/catalog.md)：开源项目的证据、适用范围和风险。
