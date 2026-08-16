@@ -4,6 +4,7 @@
 
 ## 主要入口
 
+- [Agent 交接说明](HANDOFF.md)：当前项目状态、阅读顺序、安全边界和待讨论方向。
 - [Rednote Sync Core](projects/rednote-sync-core/README.md)：当前正式实现、运行命令和发布边界。
 - [产品文档](docs/README.md)：项目使命、路线图和设计方案。
 - [研究目录](research/README.md)：候选项目调研、逆向样本和研究工具。
