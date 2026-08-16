@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "mode": "import-json",
+  "account": {
+    "schemaVersion": 1,
+    "accountId": "synthetic-import-account",
+    "hostId": "xhs",
+    "displayName": "Synthetic Import",
+    "firstSeenAt": "2026-01-01T00:00:00.000Z",
+    "lastSeenAt": "2026-01-01T00:00:00.000Z"
+  },
+  "pages": [
+    {
+      "scope": { "hostId": "xhs", "accountId": "synthetic-import-account", "target": "liked", "boardId": null },
+      "requestCursor": null,
+      "nextCursor": null,
+      "hasMore": false,
+      "items": [{ "noteId": "synthetic-import-note" }],
+      "details": [
+        {
+          "note": {
+            "schemaVersion": 1,
+            "hostId": "xhs",
+            "accountId": "synthetic-import-account",
+            "noteId": "synthetic-import-note",
+            "publicUrl": "https://www.xiaohongshu.com/explore/synthetic-import-note",
+            "title": "Synthetic normalized import",
+            "body": "This is already an offline input envelope.",
+            "noteType": "text",
+            "author": { "id": "synthetic-author", "name": "Synthetic Author", "publicUrl": null },
+            "publishedAt": "2026-01-01T00:00:00.000Z",
+            "updatedAt": "2026-01-01T00:00:00.000Z",
+            "capturedAt": "2026-01-01T00:00:00.000Z",
+            "tags": ["synthetic", "offline"],
+            "metrics": { "liked": 1, "collected": 0, "commented": 0, "shared": 0 },
+            "memberships": [{ "target": "liked", "boardId": null, "boardName": null, "observedAt": "2026-01-01T00:00:00.000Z" }]
+          },
+          "revisionAt": "2026-01-01T00:00:00.000Z",
+          "claimedPayloadSha256": null,
+          "mediaSetComplete": true,
+          "media": []
+        }
+      ]
+    }
+  ],
+  "retryItems": []
+}

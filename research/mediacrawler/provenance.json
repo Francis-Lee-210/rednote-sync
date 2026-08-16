@@ -1,0 +1,45 @@
+{
+  "name": "MediaCrawler",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/NanmiCoder/MediaCrawler.git",
+  "repository": "https://github.com/NanmiCoder/MediaCrawler",
+  "revision": "5665a271ef15e0ec82b1f48a951b66760e054db9",
+  "treeRevision": "4ba6c7c4112eb47a1e8b21e973088f818743fed0",
+  "branch": "main",
+  "capturedAt": "2026-08-13",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "partial-clone-no-tags-no-submodules-no-lfs",
+  "checkoutState": "detached-head",
+  "trackedCount": 329,
+  "staticInventory": {
+    "trackedPythonTestModules": 21,
+    "uvLockPackageNodes": 92,
+    "uvLockRegistryPackageNodes": 91,
+    "uvLockArtifactSha256Entries": 1118,
+    "uvDefaultRegistry": "https://pypi.tuna.tsinghua.edu.cn/simple",
+    "rootNpmIntegrityEntries": 310,
+    "webuiNpmIntegrityEntries": 271,
+    "npmLockResolvedEntriesUsingNpmMirror": 581,
+    "npmLockPackageNodesWithInstallScripts": 7,
+    "githubWorkflowFiles": 1,
+    "externalGithubActionUses": 5,
+    "externalGithubActionUsesNotPinnedToFullSha": 5
+  },
+  "repositoryState": {"dirty": false, "trackedChanges": [], "untracked": []},
+  "licenseFiles": ["source/LICENSE", "source/webui/LICENSE"],
+  "dependencyManifests": [
+    "source/pyproject.toml",
+    "source/uv.lock",
+    "source/requirements.txt",
+    "source/package.json",
+    "source/package-lock.json",
+    "source/.pre-commit-config.yaml",
+    "source/webui/package.json",
+    "source/webui/package-lock.json"
+  ],
+  "notes": [
+    "The root license is NON-COMMERCIAL LEARNING LICENSE 1.1; the webui subtree has a separate license file that must be reviewed independently.",
+    "Upstream tag associations were not fetched or verified because this review checkout used --no-tags; project metadata reports version 0.1.0.",
+    "No dependency installation, build, tests, browser launch, credential access, provider execution, proxy use, or platform requests are permitted."
+  ]
+}

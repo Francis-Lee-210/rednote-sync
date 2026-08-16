@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "project": "xiaohongshu-importer",
+  "status": "complete",
+  "phase": "complete",
+  "revision": "b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37",
+  "treeRevision": "9406f14ba3580663bec5d6e065692c5a1c0fe893",
+  "updatedAt": "2026-08-13",
+  "completedAreas": [
+    "source-frozen",
+    "tracked-inventory",
+    "static-metadata-inventory",
+    "review-scope-routed",
+    "lockfile-static-inventory",
+    "architecture-output-media-review",
+    "security-capability-review",
+    "dependencies-ci-license-review",
+    "rednote-sync-fit-synthesis",
+    "independent-evidence-review-pass",
+    "independent-security-review-pass",
+    "independent-supply-license-fit-review-pass",
+    "catalog-and-navigation-update"
+  ],
+  "pendingTasks": [],
+  "openFindings": [],
+  "reviewerFindings": [
+    {
+      "review": "evidence-and-links",
+      "status": "pass",
+      "openFindings": 0
+    },
+    {
+      "review": "security",
+      "status": "pass",
+      "openFindings": 0
+    },
+    {
+      "review": "supply-license-and-fit",
+      "status": "pass",
+      "openFindings": 0
+    }
+  ],
+  "blockedReason": null,
+  "nextProject": "Spider_XHS",
+  "activationRule": "Do not activate Spider_XHS until xiaohongshu-importer is complete and the user explicitly says continue."
+}

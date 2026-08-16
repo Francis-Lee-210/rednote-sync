@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "project": "XHS_ALL_IN_ONE",
+  "repository": "https://github.com/cv-cat/XHS_ALL_IN_ONE.git",
+  "defaultBranch": "master",
+  "revision": "63b85de2b15b3f79134b08fa675381505f45d4db",
+  "treeRevision": "e41d66b1816f88a53eb68c85898806c97a7be41e",
+  "authoredAt": "2026-07-26T13:50:14+08:00",
+  "committedAt": "2026-07-26T13:50:14+08:00",
+  "capturedAt": "2026-08-13",
+  "checkout": {
+    "strategy": "official GitHub partial clone with full tracked working tree",
+    "filter": "blob:none",
+    "tagsFetched": false,
+    "submodulesInitialized": false,
+    "gitLfsInitialized": false,
+    "detachedHead": true
+  },
+  "staticInventory": {
+    "trackedFiles": 217,
+    "trackedPythonFiles": 123,
+    "trackedJavaScriptTypeScriptFiles": 54,
+    "trackedJsonFiles": 12,
+    "trackedTestFiles": 3,
+    "trackedTestFunctions": 130,
+    "trackedExplicitSkippedOrXfailedTests": 0,
+    "trackedWorkflowFiles": 0,
+    "trackedLicenseNoticeFiles": 0,
+    "trackedGitlinks": 0,
+    "pythonRequirementEntries": 26,
+    "pythonExactlyPinnedRequirementEntries": 0,
+    "rootNpmLockfileVersion": 3,
+    "rootNpmLockNonRootPackageNodes": 60,
+    "rootNpmLockResolvedEntries": 60,
+    "rootNpmLockIntegrityEntries": 60,
+    "rootNpmLockPackageNodesWithInstallScripts": 0,
+    "frontendNpmLockfileVersion": 3,
+    "frontendNpmLockNonRootPackageNodes": 257,
+    "frontendNpmLockResolvedEntries": 257,
+    "frontendNpmLockIntegrityEntries": 257,
+    "frontendNpmLockPackageNodesWithInstallScripts": 2
+    ,
+    "rootNpmResolvedToTencentMirror": 59,
+    "rootNpmResolvedToNpmRegistry": 1,
+    "frontendNpmResolvedToTencentMirror": 257,
+    "embeddedSpiderComparablePaths": 61,
+    "embeddedSpiderIdenticalGitBlobs": 57,
+    "embeddedSpiderDifferentGitBlobs": 4
+  },
+  "repositoryState": {
+    "trackedDirty": false,
+    "trackedChanges": [],
+    "untrackedInspected": false
+  },
+  "licenseFiles": [],
+  "dependencyManifests": [
+    "source/requirements.txt",
+    "source/package.json",
+    "source/package-lock.json",
+    "source/frontend/package.json",
+    "source/frontend/package-lock.json",
+    "source/Dockerfile",
+    "source/docker-compose.yml"
+  ],
+  "reviewedConfigurationFiles": [
+    "source/.dockerignore",
+    "source/.gitignore",
+    "source/config/default.yaml",
+    "source/config/production.yaml"
+  ],
+  "notes": [
+    "No tags were fetched; upstream tag and release-asset correspondence were not verified.",
+    "No dependency installation, build, test, browser, platform request, SAST, SCA, or credential access was performed.",
+    "Repository cleanliness was checked for tracked paths only; ignored and untracked runtime data were not inventoried or read.",
+    "The repository contains no tracked LICENSE, COPYING, NOTICE, or GitHub workflow file at the fixed revision."
+  ]
+}

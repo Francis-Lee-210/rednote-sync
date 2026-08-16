@@ -1,0 +1,25 @@
+{
+  "name": "xhs-cli-export",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/DoYitNow/xhs-cli-export.git",
+  "repository": "https://github.com/DoYitNow/xhs-cli-export",
+  "revision": "6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83",
+  "treeRevision": "1d3855f069146a53fd1979dac048cd1b23e2bc32",
+  "branch": "main",
+  "capturedAt": "2026-08-13",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "partial-clone-no-tags",
+  "checkoutState": "detached-head",
+  "trackedFileCount": 19,
+  "repositoryState": {
+    "dirty": false,
+    "trackedChanges": [],
+    "untracked": []
+  },
+  "licenseFiles": ["source/LICENSE"],
+  "dependencyManifests": ["source/pyproject.toml"],
+  "notes": [
+    "Only tracked paths at the fixed revision are eligible as review evidence.",
+    "No installation, execution, login, upstream CLI invocation, browser session, or platform request is permitted."
+  ]
+}

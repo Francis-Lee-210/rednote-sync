@@ -1,0 +1,44 @@
+{
+  "name": "Rednote2Obsidian",
+  "artifactType": "git-working-tree-plugin-snapshot",
+  "version": "1.2.3",
+  "author": "自律小嘉同学",
+  "sourceUrl": "https://github.com/EwingYangs/rednote2obsidian.git",
+  "repository": "https://github.com/EwingYangs/rednote2obsidian.git",
+  "revision": "e8dc0678aacc451a4ffa6d7942f795ea85860ba1",
+  "branch": "main",
+  "capturedAt": null,
+  "recordedAt": "2026-08-13",
+  "snapshotPolicy": "full-working-tree-preserved-including-git-metadata",
+  "repositoryState": {
+    "dirty": true,
+    "modified": [
+      "README.md"
+    ],
+    "deleted": [
+      "LICENSE",
+      "README-en.md"
+    ],
+    "untracked": [
+      ".DS_Store"
+    ]
+  },
+  "identity": [
+    {
+      "path": "samples/main.js",
+      "sha256": "5ce6a362f4cbd0542caecb1e37ab0c1c20f27b9164890da1c80f8a682cb194b7"
+    },
+    {
+      "path": "samples/manifest.json",
+      "sha256": "acac98903a226351bd3780a10106b50ae5550e6ef96d4851a15f952e45ba6dd0"
+    },
+    {
+      "path": "samples/styles.css",
+      "sha256": "88722426c4944bf95b37ba67da31f1dfb700930bd6236565fd982b8c4f3d7669"
+    }
+  ],
+  "notes": [
+    "The repository state was already dirty before the workspace reorganization.",
+    "The recorded revision identifies HEAD but does not imply that the working tree matches that commit."
+  ]
+}

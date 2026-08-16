@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "project": "Spider_XHS",
+  "status": "complete",
+  "phase": "complete",
+  "revision": "2030f5d4454e556ad7a9caa83b3ec532d4df20c7",
+  "treeRevision": "8eb5adb98b59ae96c552c73b87f655ae2efdee9f",
+  "updatedAt": "2026-08-13",
+  "completedAreas": [
+    "source-frozen",
+    "tracked-inventory",
+    "static-metadata-inventory",
+    "review-scope-routed",
+    "architecture-data-media-recovery-review",
+    "security-session-capability-review",
+    "supply-license-fit-review",
+    "synthesis",
+    "independent-evidence-review-pass",
+    "independent-security-review-pass",
+    "independent-supply-fit-review-pass",
+    "catalog-and-navigation-update"
+  ],
+  "pendingTasks": [],
+  "openFindings": [],
+  "reviewerFindings": [
+    {
+      "reviewer": "evidence-and-links",
+      "status": "pass",
+      "openFindings": 0
+    },
+    {
+      "reviewer": "security-session-capability",
+      "status": "pass",
+      "openFindings": 0
+    },
+    {
+      "reviewer": "supply-license-fit",
+      "status": "pass",
+      "openFindings": 0
+    }
+  ],
+  "blockedReason": null,
+  "nextProject": "XHS_ALL_IN_ONE",
+  "activationRule": "Do not activate XHS_ALL_IN_ONE until Spider_XHS is complete. User confirmation is no longer required between remaining projects."
+}

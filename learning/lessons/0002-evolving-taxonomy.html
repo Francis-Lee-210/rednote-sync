@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>短课：让分类体系随收藏一起生长</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+<main>
+  <div class="kicker">Lesson 0002 · 约 6 分钟</div>
+  <h1>第一版标签是种子，不是围墙</h1>
+  <p class="lede">新增帖子当然可能超出旧类别。正确做法不是频繁推倒重来，也不是把新内容硬塞进最接近的旧标签，而是让系统明确承认“未知”。</p>
+
+  <h2>封闭分类与开放分类</h2>
+  <table>
+    <thead><tr><th>方式</th><th>遇到全新内容时</th><th>后果</th></tr></thead>
+    <tbody>
+      <tr><td>封闭分类</td><td>必须从现有标签里选一个</td><td>看似整齐，但会持续制造错误分类</td></tr>
+      <tr><td>开放分类</td><td>允许输出“未知/需要新标签”</td><td>保留不确定性，之后可增量扩展词表</td></tr>
+    </tbody>
+  </table>
+  <p>这类问题在机器学习中通常称为开放世界识别：系统既要识别已知类别，也要拒绝未知类别，并在获得新标签后逐步扩展。可参阅基础论文 <a href="https://openaccess.thecvf.com/content_cvpr_2015/html/Bendale_Towards_Open_World_2015_CVPR_paper.html">Towards Open World Recognition</a>。</p>
+
+  <h2>一次新增同步应如何运行</h2>
+  <ol>
+    <li>新帖子先与现有标签定义和代表性样本比较。</li>
+    <li>匹配明确时，直接使用已有标签。</li>
+    <li>匹配不明确时，不强行归类；写入 <code>needs_taxonomy_review</code>。</li>
+    <li>系统把相似的未知帖子聚在一起，并提出候选标签。</li>
+    <li>你批量决定：新增标签、并入旧标签、改成旧标签别名，或保持未分类。</li>
+    <li>词表发布新版本，只重新检查可能受影响的帖子。</li>
+  </ol>
+
+  <div class="note"><strong>关键点：</strong>100–200 条样本只负责生成“第一版常用词汇”，并不声称覆盖你未来的全部兴趣。</div>
+
+  <h2>标签自身也需要身份和历史</h2>
+  <pre>- id: aesthetic.sound_walk
+  name: 声音散步
+  dimension: aesthetics.form
+  definition: 以步行过程中的环境声音和听觉注意为主体的内容
+  aliases: [听觉漫游]
+  examples: [note_0182, note_2077]
+  status: active
+  introduced_in: 1.3
+  reviewed_by: user</pre>
+  <p>稳定的 <code>id</code> 与可变化的显示名称分开后，你可以改名、增加别名或合并标签，而不必破坏旧帖子。每张分类卡记录 <code>taxonomy_version</code>，以后也能知道它依据哪一版词表生成。</p>
+
+  <h2>什么时候需要重新分类旧帖子</h2>
+  <p>通常不需要重跑全部 2000 条。新增“声音散步”时，只需查找与它相似、曾经低置信度、或被标成“城市漫游/环境声音”的相关帖子。受影响集合重新分类，其余保持不动。</p>
+
+  <div class="decision">
+    <strong>本轮设计问题</strong>
+    <p>新帖子无法可靠匹配旧词表时，是立即打断同步要求你决定，还是先进入“待分类收件箱”，等积累一批后再集中审核？推荐后者。</p>
+  </div>
+
+  <p>下一课：<a href="0003-learning-from-corrections.html">为什么一次修正不等于一条全局规则</a>。也可以返回<a href="0001-ai-classification-pipeline.html">上一课</a>或查看<a href="../reference/ai-classification-pipeline.html">分类流程速查表</a>。如果“未知检测”或词表版本仍然抽象，可以继续向 agent 追问。</p>
+</main>
+</body>
+</html>

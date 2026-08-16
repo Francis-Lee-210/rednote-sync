@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "mode": "fixture",
+  "account": {
+    "schemaVersion": 1,
+    "accountId": "synthetic-demo-account",
+    "hostId": "xhs",
+    "displayName": "Synthetic Demo",
+    "firstSeenAt": "2026-01-01T00:00:00.000Z",
+    "lastSeenAt": "2026-01-01T00:00:00.000Z"
+  },
+  "pages": [
+    {
+      "scope": { "hostId": "xhs", "accountId": "synthetic-demo-account", "target": "collected", "boardId": null },
+      "requestCursor": null,
+      "nextCursor": null,
+      "hasMore": false,
+      "items": [{ "noteId": "synthetic-media-note" }],
+      "details": [
+        {
+          "note": {
+            "schemaVersion": 1,
+            "hostId": "xhs",
+            "accountId": "synthetic-demo-account",
+            "noteId": "synthetic-media-note",
+            "publicUrl": "https://www.xiaohongshu.com/explore/synthetic-media-note",
+            "title": "Synthetic media note",
+            "body": "The attached bytes only exercise offline media storage.",
+            "noteType": "image",
+            "author": { "id": "synthetic-author", "name": "Synthetic Author", "publicUrl": null },
+            "publishedAt": "2026-01-01T00:00:00.000Z",
+            "updatedAt": "2026-01-01T00:00:00.000Z",
+            "capturedAt": "2026-01-01T00:00:00.000Z",
+            "tags": ["synthetic", "offline"],
+            "metrics": { "liked": 0, "collected": 1, "commented": 0, "shared": 0 },
+            "memberships": [{ "target": "collected", "boardId": null, "boardName": null, "observedAt": "2026-01-01T00:00:00.000Z" }]
+          },
+          "revisionAt": "2026-01-01T00:00:00.000Z",
+          "claimedPayloadSha256": null,
+          "mediaSetComplete": true,
+          "media": [{ "kind": "image", "ordinal": 1, "mediaId": "synthetic-media", "relativePath": "media/synthetic.gif" }]
+        }
+      ]
+    }
+  ],
+  "retryItems": []
+}

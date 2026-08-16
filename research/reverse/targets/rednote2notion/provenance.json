@@ -1,0 +1,31 @@
+{
+  "name": "Rednote2Notion",
+  "artifactType": "unpacked-browser-extension",
+  "version": "1.0.6",
+  "author": "ewing",
+  "sourceUrl": null,
+  "repository": null,
+  "revision": null,
+  "branch": null,
+  "capturedAt": null,
+  "recordedAt": "2026-08-13",
+  "snapshotPolicy": "full-local-artifact-preserved",
+  "identity": [
+    {
+      "path": "samples/manifest.json",
+      "sha256": "cf75c9ed560b95e91fee31904336d378f1866b79174c8ee5bdecf598ee4dcfda"
+    },
+    {
+      "path": "samples/static/background/index.js",
+      "sha256": "31aac68e5e6a473eb2ba7962a112cad7cdd87d809fb92bda3df1d0b136d6ecf7"
+    },
+    {
+      "path": "samples/content-script.965f3134.js",
+      "sha256": "b08c18c0d7173278715a143ef963b5454c69c7b8681529360e1a725c0d540c83"
+    }
+  ],
+  "notes": [
+    "The local artifact does not contain reliable acquisition metadata.",
+    "Unknown source and capture fields are intentionally null rather than inferred."
+  ]
+}

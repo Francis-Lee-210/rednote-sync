@@ -1,0 +1,18 @@
+.DS_Store
+**/.DS_Store
+.local/
+**/node_modules/
+*.tgz
+**/.venv/
+**/__pycache__/
+*.py[cod]
+
+# Local prototype credentials
+/prototypes/test-cookie.txt
+/prototypes/xsec_token.txt
+
+# Third-party checkouts and reproducible reverse-engineering material
+/research/*/source/
+/research/reverse/outputs/
+/research/reverse/targets/*/samples/
+/research/reverse/targets/*/web-snapshots/

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>短课：为什么一次修正不等于一条全局规则</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+<main>
+  <div class="kicker">Lesson 0003 · 约 6 分钟</div>
+  <h1>每次修正都该学习，但学习有三个尺度</h1>
+  <p class="lede">“用户改了标签”足以证明当前输出错了，却不总能证明模型应该怎样修改所有未来输出。系统要保留反馈，同时控制它的泛化范围。</p>
+
+  <h2>为什么单次修改可能有不同含义</h2>
+  <table>
+    <thead><tr><th>你做出的修改</th><th>它可能说明</th><th>合理影响</th></tr></thead>
+    <tbody>
+      <tr><td>把“旅游攻略”改成“城市观察”</td><td>模型误解了文章目的</td><td>影响表达方式相似的帖子</td></tr>
+      <tr><td>删除“怀旧”</td><td>这条证据不足，不代表你永远不用“怀旧”</td><td>当前帖 + 相似视觉组合</td></tr>
+      <tr><td>添加“写作素材”</td><td>这是你的收藏用途，原帖内容未必能独立推断</td><td>当前帖；以后需更多个人偏好证据</td></tr>
+      <tr><td>新建“声音散步”</td><td>现有词表缺少一个真实类别</td><td>候选全局标签，审核相关旧帖</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note"><strong>反例：</strong>你把一条雨夜视频改成“怀旧”，系统若立刻生成“雨夜 = 怀旧”，下一条只是展示雨天摄影技巧的视频就可能被错误泛化。单个样本通常只告诉系统一个点，还没有画出类别边界。</div>
+
+  <h2>更合适的三级反馈</h2>
+  <ol>
+    <li><strong>立即纠正：</strong>当前帖子永远以人工结果为准，同时保存 AI 原预测。</li>
+    <li><strong>自动成为示例：</strong>以后遇到相似内容，系统检索这条修正作为上下文；它会产生影响，但不是绝对规则。</li>
+    <li><strong>形成规则：</strong>当多次修正呈现一致模式，系统在待分类收件箱中建议修改标签定义、增加别名或新建类别，由你批量批准。</li>
+  </ol>
+
+  <p>这与开放世界识别的基本思想相容：先识别或拒绝未知，再收集人工标注，最后增量扩展已知类别，而不是用单个未知样本立即重写全部分类边界。参阅 <a href="https://openaccess.thecvf.com/content_cvpr_2015/html/Bendale_Towards_Open_World_2015_CVPR_paper.html">Towards Open World Recognition</a>。</p>
+
+  <h2>用户不需要每次多点一个按钮</h2>
+  <p>第一版可以默认把所有人工修改都写入反馈日志并作为示例。系统只在准备改变全局词表或批量重分类时请求确认。这样既尊重每一次修正，又避免一条特殊案例污染整个标签体系。</p>
+
+  <pre>{
+  "note_id": "note_0182",
+  "model_tags": ["旅游攻略", "怀旧"],
+  "user_tags": ["城市观察", "写作素材"],
+  "feedback_effect": "retrieval_example",
+  "taxonomy_change": "pending_pattern_detection"
+}</pre>
+
+  <div class="decision">
+    <strong>本轮设计问题</strong>
+    <p>是否采用三级机制：所有修正自动影响当前帖和相似帖，但只有出现重复、稳定的修正模式后，才建议改变全局词表？推荐采用。</p>
+  </div>
+
+  <p>返回<a href="0002-evolving-taxonomy.html">上一课</a>或查看<a href="../reference/ai-classification-pipeline.html">分类流程速查表</a>。如果你认为某类修改应该立即全局生效，可以把真实例子交给 agent 继续检验。</p>
+</main>
+</body>
+</html>

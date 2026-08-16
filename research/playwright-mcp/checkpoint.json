@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "project": "Playwright MCP",
+  "status": "complete",
+  "phase": "complete",
+  "revision": "7e0457a7cbf88823bf0146d12c46ae12c6818247",
+  "treeRevision": "30bfcd6896206617aa1d379da0e88ae9ee7af478",
+  "updatedAt": "2026-08-13",
+  "completedAreas": [
+    "source-frozen",
+    "tracked-inventory",
+    "static-metadata-inventory",
+    "review-scope-routed",
+    "architecture-tools-session-review",
+    "security-capability-secret-review",
+    "dependencies-ci-license-review",
+    "rednote-sync-fit-synthesis",
+    "independent-evidence-review-pass",
+    "independent-security-review-pass",
+    "independent-supply-license-fit-review-pass",
+    "catalog-and-navigation-update"
+  ],
+  "pendingTasks": [],
+  "openFindings": [],
+  "reviewerFindings": [
+    {
+      "review": "evidence-and-links",
+      "status": "pass",
+      "openFindings": 0
+    },
+    {
+      "review": "security",
+      "status": "pass",
+      "openFindings": 0
+    },
+    {
+      "review": "supply-license-and-fit",
+      "status": "pass",
+      "openFindings": 0
+    }
+  ],
+  "blockedReason": null,
+  "nextProject": "xiaohongshu-importer",
+  "activationRule": "Do not activate xiaohongshu-importer until Playwright MCP is complete and the user explicitly says continue."
+}

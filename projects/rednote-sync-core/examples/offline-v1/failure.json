@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "mode": "fixture",
+  "account": {
+    "schemaVersion": 1,
+    "accountId": "synthetic-demo-account",
+    "hostId": "xhs",
+    "displayName": "Synthetic Demo",
+    "firstSeenAt": "2026-01-01T00:00:00.000Z",
+    "lastSeenAt": "2026-01-01T00:00:00.000Z"
+  },
+  "pages": [
+    {
+      "scope": { "hostId": "xhs", "accountId": "synthetic-demo-account", "target": "posted", "boardId": null },
+      "requestCursor": null,
+      "nextCursor": null,
+      "hasMore": false,
+      "items": [{ "noteId": "synthetic-retry-note" }],
+      "details": [{ "noteId": "synthetic-retry-note", "failure": { "category": "DETAIL", "retryAt": null } }]
+    }
+  ],
+  "retryItems": []
+}

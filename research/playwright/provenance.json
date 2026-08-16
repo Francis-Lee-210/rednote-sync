@@ -1,0 +1,48 @@
+{
+  "name": "Playwright",
+  "artifactType": "git-sparse-working-tree-research-copy",
+  "sourceUrl": "https://github.com/microsoft/playwright.git",
+  "repository": "https://github.com/microsoft/playwright",
+  "revision": "bcb3563aa73d7ac71ac8cb877433201b1b97b7da",
+  "treeRevision": "b476d152ce110a37b1bc1b67679ac9070fbb58a6",
+  "branch": "main",
+  "capturedAt": "2026-08-13",
+  "reviewPolicy": "tracked-files-only-static-review-sparse-materialization",
+  "checkoutPolicy": "partial-clone-no-tags-sparse-cone",
+  "checkoutState": "detached-head",
+  "trackedIndexCount": 3087,
+  "materializedTrackedCount": 915,
+  "sparsePaths": [
+    ".azure-pipelines",
+    ".github/actions",
+    ".github/workflows",
+    "docs/src",
+    "packages/playwright-core/browsers.json",
+    "packages/playwright-core/src",
+    "tests/library"
+  ],
+  "repositoryState": {"dirty": false, "trackedChanges": [], "untracked": []},
+  "staticInventory": {
+    "remoteNpmTarballs": 665,
+    "remoteNpmTarballsWithIntegrity": 665,
+    "githubActionUsesTotal": 116,
+    "localGithubActionUses": 27,
+    "externalGithubActionUses": 89,
+    "externalGithubActionUsesNotPinnedToFullSha": 0
+  },
+  "licenseFiles": [
+    "source/LICENSE",
+    "source/NOTICE",
+    "source/packages/playwright-core/ThirdPartyNotices.txt",
+    "source/packages/playwright-core/src/server/bidi/third_party/LICENSE",
+    "source/packages/playwright-core/src/client/eventEmitter.ts",
+    "source/packages/playwright-core/src/tools/cli-client/minimist.ts"
+  ],
+  "dependencyManifests": ["source/package.json", "source/package-lock.json"],
+  "notes": [
+    "Root tracked files are materialized by cone-mode sparse checkout.",
+    "Only materialized tracked paths at the fixed revision are eligible as local review evidence.",
+    "The sparse scope was expanded during review to include GitHub composite actions, Azure release pipelines, and the browser revision manifest; no later project was acquired.",
+    "No dependency installation, browser download, build, test, browser launch, profile access, or network automation is permitted."
+  ]
+}

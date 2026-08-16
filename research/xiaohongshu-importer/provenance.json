@@ -1,0 +1,55 @@
+{
+  "name": "xiaohongshu-importer",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/bnchiang96/xiaohongshu-importer.git",
+  "repository": "https://github.com/bnchiang96/xiaohongshu-importer",
+  "revision": "b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37",
+  "treeRevision": "9406f14ba3580663bec5d6e065692c5a1c0fe893",
+  "branch": "main",
+  "capturedAt": "2026-08-13",
+  "fixedRevisionAuthoredAt": "2026-01-14T14:50:12+08:00",
+  "fixedRevisionCommittedAt": "2026-01-14T14:50:12+08:00",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "partial-clone-no-tags-no-submodules-no-lfs",
+  "checkoutState": "detached-head",
+  "trackedCount": 16,
+  "staticInventory": {
+    "packageVersion": "1.1.3",
+    "manifestVersion": "1.1.3",
+    "runtimeDependencies": 1,
+    "developmentDependencies": 5,
+    "yarnLockResolutionNodes": 102,
+    "yarnLockResolvedEntries": 102,
+    "yarnLockIntegrityEntries": 102,
+    "yarnLockRegistryYarnpkgEntries": 102,
+    "trackedTestFiles": 0,
+    "trackedWorkflowFiles": 0,
+    "trackedGitmodules": 0
+  },
+  "repositoryState": {
+    "dirty": false,
+    "trackedChanges": [],
+    "untracked": []
+  },
+  "licenseFiles": [
+    "source/LICENSE"
+  ],
+  "dependencyManifests": [
+    "source/package.json",
+    "source/yarn.lock"
+  ],
+  "reviewedConfigurationFiles": [
+    "source/manifest.json",
+    "source/versions.json",
+    "source/.npmrc",
+    "source/.eslintrc",
+    "source/.gitignore",
+    "source/esbuild.config.mjs",
+    "source/tsconfig.json"
+  ],
+  "notes": [
+    "No tags were fetched; upstream tag and release-asset correspondence were not verified.",
+    "No dependency installation, build, test, plugin load, browser, platform request, SAST, SCA, or credential access was performed.",
+    "The local tool-index required by the optional security skills is absent, so no unverified scanner path was guessed or executed."
+  ]
+}

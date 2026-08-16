@@ -1,0 +1,73 @@
+{
+  "name": "Playwright MCP",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/microsoft/playwright-mcp.git",
+  "repository": "https://github.com/microsoft/playwright-mcp",
+  "revision": "7e0457a7cbf88823bf0146d12c46ae12c6818247",
+  "treeRevision": "30bfcd6896206617aa1d379da0e88ae9ee7af478",
+  "branch": "main",
+  "capturedAt": "2026-08-13",
+  "fixedRevisionAuthoredAt": "2026-08-07T11:18:39-07:00",
+  "fixedRevisionCommittedAt": "2026-08-07T11:18:39-07:00",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "partial-clone-no-tags-no-submodules-no-lfs",
+  "checkoutState": "detached-head",
+  "trackedCount": 34,
+  "staticInventory": {
+    "packageVersion": "0.0.79",
+    "runtimeDependencies": 2,
+    "developmentDependencies": 3,
+    "npmLockPackageNodesExcludingRoot": 97,
+    "npmLockResolvedEntries": 97,
+    "npmLockIntegrityEntries": 97,
+    "npmLockPackageNodesWithInstallScripts": 1,
+    "trackedSpecFiles": 5,
+    "trackedTestDeclarations": 8,
+    "generatedPublicToolSchemas": 69,
+    "generatedReadOnlyToolSchemas": 27,
+    "generatedNonReadOnlyToolSchemas": 42,
+    "githubWorkflowFiles": 2,
+    "externalGithubActionUses": 19,
+    "externalGithubActionUsesNotPinnedToFullSha": 19,
+    "dockerFromInstructions": 4,
+    "dockerBaseImagesPinnedByDigest": 0
+  },
+  "repositoryState": {
+    "dirty": false,
+    "trackedChanges": [],
+    "untracked": []
+  },
+  "licenseFiles": [
+    "source/LICENSE"
+  ],
+  "dependencyManifests": [
+    "source/package.json",
+    "source/package-lock.json"
+  ],
+  "reviewedConfigurationFiles": [
+    "source/config.d.ts",
+    "source/server.json",
+    "source/playwright.config.ts",
+    "source/.npmignore",
+    "source/.claude/skills/release.md"
+  ],
+  "reviewedSupplyChainFiles": [
+    "source/Dockerfile",
+    "source/.github/workflows/ci.yml",
+    "source/.github/workflows/publish.yml",
+    "source/.azure-pipelines/publish.yml",
+    "source/.npmignore"
+  ],
+  "relatedImplementationEvidence": {
+    "repository": "https://github.com/microsoft/playwright",
+    "localReview": "../playwright/review.md",
+    "localRevision": "bcb3563aa73d7ac71ac8cb877433201b1b97b7da",
+    "relationship": "adjacent Playwright monorepo snapshot; exact correspondence to npm alpha 1.63.0-alpha-2026-08-05 is not established"
+  },
+  "notes": [
+    "The fixed root repository delegates runtime implementation to exact npm dependencies playwright/playwright-core 1.63.0-alpha-2026-08-05.",
+    "No tags were fetched; upstream tag, npm tarball, browser artifact, and fixed commit correspondence were not verified.",
+    "The tracked tests include a public test-only TLS private key; its value was not copied or treated as a production secret.",
+    "No dependency installation, build, test, browser, MCP server, third-party script, platform request, SAST, SCA, or credential access was performed."
+  ]
+}

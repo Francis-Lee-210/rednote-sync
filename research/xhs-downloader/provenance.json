@@ -1,0 +1,44 @@
+{
+  "name": "XHS-Downloader",
+  "artifactType": "git-working-tree-research-copy",
+  "version": "V2.8 Beta",
+  "sourceUrl": "https://github.com/JoeanAmier/XHS-Downloader.git",
+  "repository": "https://github.com/JoeanAmier/XHS-Downloader.git",
+  "revision": "56c912e0df7920ad0fbf5cd9d911628587b9c7e6",
+  "treeRevision": "5497c2defc3b3fe1586c8d7b082d7cb3d1a7ed3d",
+  "branch": "master",
+  "capturedAt": "2026-08-13",
+  "recordedAt": "2026-08-13",
+  "snapshotPolicy": "full-working-directory-preserved",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutState": "detached-head",
+  "trackedFileCount": 106,
+  "licenseFiles": [
+    "source/LICENSE"
+  ],
+  "dependencyManifests": [
+    "source/pyproject.toml",
+    "source/requirements.txt",
+    "source/uv.lock"
+  ],
+  "repositoryState": {
+    "dirty": true,
+    "trackedChanges": [],
+    "untracked": [
+      ".DS_Store"
+    ]
+  },
+  "preservedLocalState": [
+    "source/.git",
+    "source/.venv",
+    "source/Volume",
+    "source/**/__pycache__",
+    "source/.DS_Store"
+  ],
+  "notes": [
+    "The complete local directory was moved without deleting ignored dependencies, runtime data, caches, or Finder metadata.",
+    "The revision identifies HEAD; ignored and untracked local state is not represented by that commit.",
+    "The specialist review reads only paths returned by git ls-files at the fixed revision; preserved local state is excluded from evidence.",
+    "No dependency installation, build, project execution, browser session, or platform request is permitted during this review."
+  ]
+}

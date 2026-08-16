@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "project": "xiaohongshu-cli",
+  "status": "complete",
+  "phase": "complete",
+  "revision": "4d63f3c0c85ccd9054fa8e96d7f761aaf2507449",
+  "treeRevision": "d50bc48fe4412a9c2979cb9cdf6ff5d8bd9fb682",
+  "updatedAt": "2026-08-13",
+  "completedAreas": [
+    "source-frozen",
+    "tracked-inventory",
+    "review-scope-routed",
+    "architecture-data-schema",
+    "auth-cookie-token-session",
+    "network-retry-signing-risk",
+    "capabilities-security-supply-chain",
+    "rednote-sync-fit-synthesis",
+    "independent-review",
+    "catalog-and-navigation-update"
+  ],
+  "pendingTasks": [],
+  "openFindings": [],
+  "reviewerFindings": [
+    {"id": "EVIDENCE-ROUND-1", "status": "closed", "result": "pass"},
+    {"id": "SECURITY-ROUND-1", "status": "closed", "result": "pass"},
+    {"id": "SUPPLY-FIT-ROUND-1", "status": "closed", "result": "pass"}
+  ],
+  "blockedReason": null,
+  "nextProject": "MediaCrawler",
+  "activationRule": "Activate the next project automatically only after this checkpoint is complete."
+}

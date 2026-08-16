@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "mode": "fixture",
+  "account": {
+    "schemaVersion": 1,
+    "accountId": "synthetic-demo-account",
+    "hostId": "xhs",
+    "displayName": "Synthetic Demo",
+    "firstSeenAt": "2026-01-01T00:00:00.000Z",
+    "lastSeenAt": "2026-01-01T00:00:00.000Z"
+  },
+  "pages": [
+    {
+      "scope": { "hostId": "xhs", "accountId": "synthetic-demo-account", "target": "liked", "boardId": null },
+      "requestCursor": null,
+      "nextCursor": "synthetic-page-two",
+      "hasMore": true,
+      "items": [{ "noteId": "synthetic-note-alpha" }],
+      "details": [
+        {
+          "note": {
+            "schemaVersion": 1,
+            "hostId": "xhs",
+            "accountId": "synthetic-demo-account",
+            "noteId": "synthetic-note-alpha",
+            "publicUrl": "https://www.xiaohongshu.com/explore/synthetic-note-alpha",
+            "title": "Synthetic note alpha",
+            "body": "This is an offline synthetic note.",
+            "noteType": "text",
+            "author": { "id": "synthetic-author", "name": "Synthetic Author", "publicUrl": null },
+            "publishedAt": "2026-01-01T00:00:00.000Z",
+            "updatedAt": "2026-01-01T00:00:00.000Z",
+            "capturedAt": "2026-01-01T00:00:00.000Z",
+            "tags": ["synthetic", "offline"],
+            "metrics": { "liked": 1, "collected": 0, "commented": 0, "shared": 0 },
+            "memberships": [{ "target": "liked", "boardId": null, "boardName": null, "observedAt": "2026-01-01T00:00:00.000Z" }]
+          },
+          "revisionAt": "2026-01-01T00:00:00.000Z",
+          "claimedPayloadSha256": null,
+          "mediaSetComplete": true,
+          "media": []
+        }
+      ]
+    },
+    {
+      "scope": { "hostId": "xhs", "accountId": "synthetic-demo-account", "target": "liked", "boardId": null },
+      "requestCursor": "synthetic-page-two",
+      "nextCursor": null,
+      "hasMore": false,
+      "items": [{ "noteId": "synthetic-note-beta" }],
+      "details": [
+        {
+          "note": {
+            "schemaVersion": 1,
+            "hostId": "xhs",
+            "accountId": "synthetic-demo-account",
+            "noteId": "synthetic-note-beta",
+            "publicUrl": "https://www.xiaohongshu.com/explore/synthetic-note-beta",
+            "title": "Synthetic note beta",
+            "body": "This second offline note proves pagination.",
+            "noteType": "text",
+            "author": { "id": "synthetic-author", "name": "Synthetic Author", "publicUrl": null },
+            "publishedAt": "2026-01-01T00:00:00.000Z",
+            "updatedAt": "2026-01-01T00:00:00.000Z",
+            "capturedAt": "2026-01-01T00:00:00.000Z",
+            "tags": ["synthetic", "offline"],
+            "metrics": { "liked": 2, "collected": 0, "commented": 0, "shared": 0 },
+            "memberships": [{ "target": "liked", "boardId": null, "boardName": null, "observedAt": "2026-01-01T00:00:00.000Z" }]
+          },
+          "revisionAt": "2026-01-01T00:00:00.000Z",
+          "claimedPayloadSha256": null,
+          "mediaSetComplete": true,
+          "media": []
+        }
+      ]
+    }
+  ],
+  "retryItems": []
+}

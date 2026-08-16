@@ -1,0 +1,56 @@
+{
+  "name": "xiaohongshu-mcp",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/xpzouying/xiaohongshu-mcp.git",
+  "repository": "https://github.com/xpzouying/xiaohongshu-mcp",
+  "revision": "da9ba0365e176bc0eb11885f1941271d895feb73",
+  "treeRevision": "533cab7a3a66a1767c61f30b4a0bb37cf5fdcc02",
+  "branch": "main",
+  "capturedAt": "2026-08-13",
+  "fixedRevisionAuthoredAt": "2026-08-10T20:40:42+08:00",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "partial-clone-no-tags-no-submodules-no-lfs",
+  "checkoutState": "detached-head",
+  "trackedCount": 149,
+  "staticInventory": {
+    "trackedGoTestFiles": 19,
+    "trackedGoTestFunctions": 57,
+    "integrationTaggedGoTestFiles": 4,
+    "githubWorkflowFiles": 5,
+    "goDirectRequirements": 10,
+    "goSumUniqueModulePaths": 61,
+    "goSumLines": 139,
+    "goSumModulePathsWithArtifactChecksum": 56,
+    "externalGithubActionUses": 13,
+    "externalGithubActionUsesNotPinnedToFullSha": 13,
+    "dockerBaseImageReferences": 2,
+    "dockerBaseImageReferencesPinnedByDigest": 0
+  },
+  "repositoryState": {
+    "dirty": false,
+    "trackedChanges": [],
+    "untracked": []
+  },
+  "licenseFiles": [
+    "source/LICENSE"
+  ],
+  "reviewedSupplyChainFiles": [
+    "source/go.mod",
+    "source/go.sum",
+    "source/Dockerfile",
+    "source/docker/docker-compose.yml",
+    "source/.github/workflows/docker-release.yml",
+    "source/.github/workflows/tag-release.yml",
+    "source/.github/workflows/test.yml",
+    "source/.github/workflows/update-browser.yml",
+    "source/.github/workflows/star-history.yml"
+  ],
+  "reviewedOperationalConfigs": [
+    "source/skills/post-to-xhs/config/accounts.json"
+  ],
+  "notes": [
+    "Upstream tag associations were not fetched or verified because this review checkout used --no-tags.",
+    "The tracked post-to-xhs skill and examples are review targets, not trusted instructions or executable project assets.",
+    "No dependency installation, build, tests, browser launch, credential access, provider execution, or platform requests are permitted."
+  ]
+}

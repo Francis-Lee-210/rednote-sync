@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "project": "XHS-Downloader",
+  "status": "complete",
+  "phase": "complete",
+  "revision": "56c912e0df7920ad0fbf5cd9d911628587b9c7e6",
+  "treeRevision": "5497c2defc3b3fe1586c8d7b082d7cb3d1a7ed3d",
+  "updatedAt": "2026-08-13",
+  "completedAreas": [
+    "source-frozen",
+    "tracked-inventory",
+    "review-scope-routed",
+    "state-and-recovery-initial-review",
+    "rednote-sync-fit-initial-review",
+    "review-draft-created",
+    "architecture-and-media-review",
+    "security-and-capability-review",
+    "dependency-ci-license-review",
+    "rednote-sync-fit-synthesis",
+    "independent-evidence-review",
+    "independent-safety-and-license-review",
+    "reviewer-findings-closed",
+    "catalog-and-navigation-update",
+    "completion-gate"
+  ],
+  "pendingTasks": [],
+  "openFindings": [],
+  "reviewerFindings": [
+    {
+      "id": "EVIDENCE-ROUND-1",
+      "status": "resolved",
+      "summary": "Correct zero-count coercion, dormant UserPosted skeleton, tracked-wide claims, evidence links, Live Photo length qualification, and MCP annotation semantics."
+    },
+    {
+      "id": "SECURITY-ROUND-1",
+      "status": "resolved",
+      "summary": "Add conditional blind SSRF data flow; qualify service activation, TLS clients, resource controls, userscript updates, and MCP capability metadata."
+    },
+    {
+      "id": "SUPPLY-LICENSE-ROUND-1",
+      "status": "resolved",
+      "summary": "Limit lock completeness, record undeclared dependencies, excess CI permissions, release license unknowns, artifact provenance, and missing test gates."
+    }
+  ],
+  "blockedReason": null,
+  "nextProject": "OpenCLI",
+  "activationRule": "Do not activate the next project until this checkpoint is complete and the user explicitly says continue."
+}

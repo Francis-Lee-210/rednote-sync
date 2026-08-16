@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "mode": "fixture",
+  "account": {
+    "schemaVersion": 1,
+    "accountId": "synthetic-demo-account",
+    "hostId": "xhs",
+    "displayName": "Synthetic Demo",
+    "firstSeenAt": "2026-01-01T00:00:00.000Z",
+    "lastSeenAt": "2026-01-01T00:00:00.000Z"
+  },
+  "pages": [],
+  "retryItems": [
+    {
+      "scope": { "hostId": "xhs", "accountId": "synthetic-demo-account", "target": "posted", "boardId": null },
+      "noteId": "synthetic-retry-note",
+      "detail": {
+        "note": {
+          "schemaVersion": 1,
+          "hostId": "xhs",
+          "accountId": "synthetic-demo-account",
+          "noteId": "synthetic-retry-note",
+          "publicUrl": "https://www.xiaohongshu.com/explore/synthetic-retry-note",
+          "title": "Synthetic repaired note",
+          "body": "This offline retry now succeeds.",
+          "noteType": "text",
+          "author": { "id": "synthetic-author", "name": "Synthetic Author", "publicUrl": null },
+          "publishedAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "capturedAt": "2026-01-01T00:00:00.000Z",
+          "tags": ["synthetic", "offline"],
+          "metrics": { "liked": 0, "collected": 0, "commented": 0, "shared": 0 },
+          "memberships": [{ "target": "posted", "boardId": null, "boardName": null, "observedAt": "2026-01-01T00:00:00.000Z" }]
+        },
+        "revisionAt": "2026-01-01T00:00:00.000Z",
+        "claimedPayloadSha256": null,
+        "mediaSetComplete": true,
+        "media": []
+      }
+    }
+  ]
+}

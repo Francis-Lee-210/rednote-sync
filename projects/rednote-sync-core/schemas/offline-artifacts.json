@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "scanPolicy": "stage-three-c-two-offline-artifacts-v1",
+  "textArtifacts": [
+    "README.md",
+    "docs/offline-input-v1.md",
+    "schemas/offline-input-v1.schema.json"
+  ],
+  "exampleArtifacts": [
+    "examples/offline-v1/failure.json",
+    "examples/offline-v1/import-json-success.json",
+    "examples/offline-v1/media-success.json",
+    "examples/offline-v1/media/synthetic.gif",
+    "examples/offline-v1/no-media-success.json",
+    "examples/offline-v1/retry-success.json"
+  ]
+}

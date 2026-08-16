@@ -1,0 +1,64 @@
+{
+  "name": "rednote-sync-core",
+  "version": "0.0.0-stage3",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=26 <27"
+  },
+  "os": [
+    "darwin"
+  ],
+  "type": "module",
+  "bin": {
+    "rednote-sync": "./dist/bin.js"
+  },
+  "files": [
+    "dist/bin.js",
+    "dist/canonical.js",
+    "dist/cli.js",
+    "dist/commands.js",
+    "dist/control.js",
+    "dist/doctor.js",
+    "dist/errors.js",
+    "dist/exporters.js",
+    "dist/host-adapter.js",
+    "dist/index.js",
+    "dist/merge.js",
+    "dist/object-store.js",
+    "dist/offline-input.js",
+    "dist/paths.js",
+    "dist/private-access.js",
+    "dist/progress.js",
+    "dist/projectors.js",
+    "dist/rank.js",
+    "dist/runtime.js",
+    "dist/secrets.js",
+    "dist/state-store.js",
+    "dist/sync-engine.js",
+    "dist/types.js",
+    "dist/verify.js",
+    "dist/view-types.js",
+    "docs/offline-input-v1.md",
+    "examples/offline-v1/failure.json",
+    "examples/offline-v1/import-json-success.json",
+    "examples/offline-v1/media-success.json",
+    "examples/offline-v1/media/synthetic.gif",
+    "examples/offline-v1/no-media-success.json",
+    "examples/offline-v1/retry-success.json",
+    "schemas/offline-input-v1.schema.json"
+  ],
+  "scripts": {
+    "build:dist": "node --disable-warning=ExperimentalWarning scripts/build-dist.mjs --write",
+    "build:check": "node --disable-warning=ExperimentalWarning scripts/build-dist.mjs --check",
+    "check": "node --disable-warning=ExperimentalWarning scripts/build-dist.mjs --check && node scripts/static-check.mjs && node scripts/offline-artifact-check.mjs && node scripts/offline-artifact-check-test.mjs",
+    "test": "node --test --test-concurrency=1 tests/*.test.ts",
+    "test:release": "node --test --test-concurrency=1 tests/release-*.test.ts",
+    "pack:check": "node scripts/pack-check.mjs",
+    "test:offline-artifact": "node scripts/offline-artifact-check-test.mjs",
+    "test:offline-demo": "node scripts/offline-demo-test.mjs",
+    "test:readme-smoke": "node scripts/readme-smoke-test.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

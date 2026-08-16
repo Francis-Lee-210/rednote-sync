@@ -1,0 +1,28 @@
+{
+  "name": "xiaohongshu-cli",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/jackwener/xiaohongshu-cli.git",
+  "repository": "https://github.com/jackwener/xiaohongshu-cli",
+  "revision": "4d63f3c0c85ccd9054fa8e96d7f761aaf2507449",
+  "treeRevision": "d50bc48fe4412a9c2979cb9cdf6ff5d8bd9fb682",
+  "branch": "main",
+  "capturedAt": "2026-08-13",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "partial-clone-no-tags-no-submodules-no-lfs",
+  "checkoutState": "detached-head",
+  "trackedCount": 51,
+  "repositoryState": {"dirty": false, "trackedChanges": [], "untracked": []},
+  "licenseFiles": [],
+  "licenseMetadata": ["source/pyproject.toml"],
+  "dependencyManifests": ["source/pyproject.toml", "source/uv.lock"],
+  "staticInventory": {
+    "uvLockPackageNodes": 61,
+    "uvLockRegistryPackageNodes": 60,
+    "trackedLicenseFiles": 0,
+    "trackedPytestModuleFiles": 11
+  },
+  "notes": [
+    "The fixed revision has no tracked LICENSE or NOTICE file; Apache-2.0 appears only in package metadata/classifiers.",
+    "No dependency installation, build, tests, browser launch, credential access, provider execution, or platform requests are permitted."
+  ]
+}

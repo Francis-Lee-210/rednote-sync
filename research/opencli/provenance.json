@@ -1,0 +1,32 @@
+{
+  "name": "OpenCLI",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/jackwener/OpenCLI.git",
+  "repository": "https://github.com/jackwener/OpenCLI",
+  "revision": "a86d64705c526dc710f790e66cfcabf6ecf786b9",
+  "treeRevision": "d6b63ac69425155360196519a00437f0ca8df402",
+  "branch": "main",
+  "capturedAt": "2026-08-13",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "partial-clone-no-tags",
+  "checkoutState": "detached-head",
+  "trackedFileCount": 2501,
+  "repositoryState": {
+    "dirty": false,
+    "trackedChanges": [],
+    "untracked": []
+  },
+  "licenseFiles": [
+    "source/LICENSE"
+  ],
+  "dependencyManifests": [
+    "source/package.json",
+    "source/package-lock.json",
+    "source/extension/package.json",
+    "source/extension/package-lock.json"
+  ],
+  "notes": [
+    "Only tracked paths at the fixed revision are eligible as review evidence.",
+    "No dependency installation, build, project execution, browser session, extension loading, or platform request is permitted during this review."
+  ]
+}

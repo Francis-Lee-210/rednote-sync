@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "project": "Spider_XHS",
+  "repository": "https://github.com/cv-cat/Spider_XHS.git",
+  "defaultBranch": "master",
+  "revision": "2030f5d4454e556ad7a9caa83b3ec532d4df20c7",
+  "treeRevision": "8eb5adb98b59ae96c552c73b87f655ae2efdee9f",
+  "authoredAt": "2026-07-29T10:36:38+08:00",
+  "committedAt": "2026-07-29T10:36:38+08:00",
+  "capturedAt": "2026-08-13",
+  "checkout": {
+    "strategy": "official GitHub partial clone with full tracked checkout",
+    "filter": "blob:none",
+    "tagsFetched": false,
+    "submodulesInitialized": false,
+    "gitLfsInitialized": false,
+    "detachedHead": true
+  },
+  "staticInventory": {
+    "trackedFiles": 79,
+    "trackedPythonFiles": 41,
+    "trackedJavaScriptFiles": 16,
+    "trackedJsonFiles": 8,
+    "trackedTestFiles": 0,
+    "trackedWorkflowFiles": 0,
+    "trackedLicenseNoticeFiles": 0,
+    "trackedGitlinks": 0,
+    "pythonRequirementEntries": 11,
+    "pythonExactlyPinnedRequirementEntries": 1,
+    "npmLockfileVersion": 3,
+    "npmLockNonRootPackageNodes": 1,
+    "npmLockResolvedEntries": 1,
+    "npmLockIntegrityEntries": 1,
+    "npmLockPackageNodesWithInstallScripts": 0
+  },
+  "repositoryState": {
+    "trackedDirty": false,
+    "trackedChanges": [],
+    "untrackedInspected": false
+  },
+  "licenseFiles": [],
+  "dependencyManifests": [
+    "source/requirements.txt",
+    "source/package.json",
+    "source/package-lock.json",
+    "source/Dockerfile"
+  ],
+  "reviewedConfigurationFiles": [
+    "source/.env.example",
+    "source/.gitignore"
+  ],
+  "notes": [
+    "No tags were fetched; upstream tag and release-asset correspondence were not verified.",
+    "No dependency installation, build, test, browser, platform request, SAST, SCA, or credential access was performed.",
+    "Repository cleanliness was checked for tracked paths only; ignored and untracked runtime data were not inventoried or read.",
+    "The optional local security tool-index is absent, so no unverified scanner path was guessed or executed.",
+    "The repository contains no tracked LICENSE, COPYING, NOTICE, test, or GitHub workflow file at the fixed revision."
+  ]
+}

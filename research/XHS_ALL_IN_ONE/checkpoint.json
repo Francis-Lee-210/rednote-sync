@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "project": "XHS_ALL_IN_ONE",
+  "status": "complete",
+  "phase": "complete",
+  "revision": "63b85de2b15b3f79134b08fa675381505f45d4db",
+  "treeRevision": "e41d66b1816f88a53eb68c85898806c97a7be41e",
+  "updatedAt": "2026-08-13",
+  "completedAreas": [
+    "source-frozen",
+    "tracked-inventory",
+    "static-metadata-inventory",
+    "review-scope-routed",
+    "architecture-data-task-recovery-review",
+    "security-auth-api-agent-review",
+    "supply-license-fit-review",
+    "synthesis",
+    "independent-evidence-review-pass",
+    "independent-security-review-pass",
+    "independent-supply-license-fit-review-pass",
+    "catalog-and-navigation-update"
+  ],
+  "pendingTasks": [],
+  "openFindings": [],
+  "reviewerFindings": [
+    {
+      "reviewer": "evidence-and-links",
+      "status": "pass",
+      "openP0ToP3": 0
+    },
+    {
+      "reviewer": "security-session-permissions",
+      "status": "pass",
+      "openP0ToP3": 0,
+      "closedFindings": [
+        "batch-save-ssrf-response-exfiltration",
+        "login-session-temporary-cookie-retention",
+        "network-account-status-gate",
+        "model-base-url-key-retention-evidence"
+      ]
+    },
+    {
+      "reviewer": "supply-license-fit",
+      "status": "pass",
+      "openP0ToP3": 0
+    }
+  ],
+  "blockedReason": null,
+  "nextProject": "playwright-human-like-route-topic",
+  "activationRule": "Do not start the Playwright route topic until XHS_ALL_IN_ONE is complete. User confirmation is no longer required between remaining work items."
+}

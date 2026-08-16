@@ -1,0 +1,59 @@
+{
+  "name": "ReaJason/xhs",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/ReaJason/xhs.git",
+  "repository": "https://github.com/ReaJason/xhs",
+  "revision": "f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0",
+  "treeRevision": "886d82f3d9692a8eeb021645d1ad4f43829e5121",
+  "branch": "master",
+  "capturedAt": "2026-08-13",
+  "fixedRevisionAuthoredAt": "2025-03-25T23:43:23+08:00",
+  "fixedRevisionCommittedAt": "2025-07-01T16:14:59+08:00",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "partial-clone-no-tags-no-submodules-no-lfs",
+  "checkoutState": "detached-head",
+  "trackedCount": 41,
+  "staticInventory": {
+    "trackedPytestModules": 2,
+    "trackedTestFunctions": 57,
+    "effectivelySkippedTestFunctions": 10,
+    "unskippedTestFunctions": 47,
+    "githubWorkflowFiles": 3,
+    "externalGithubActionUses": 9,
+    "uniqueExternalGithubActions": 6,
+    "externalGithubActionUsesNotPinnedToFullSha": 9,
+    "preCommitRepositories": 4,
+    "preCommitRepositoriesPinnedToFullCommitSha": 0,
+    "setupRuntimeRequirements": 2,
+    "requirementsEntries": 11,
+    "dockerBaseImageReferences": 1,
+    "dockerBaseImageReferencesPinnedByDigest": 0,
+    "dependencyLockfiles": 0
+  },
+  "repositoryState": {
+    "dirty": false,
+    "trackedChanges": [],
+    "untracked": []
+  },
+  "licenseFiles": [
+    "source/LICENSE"
+  ],
+  "reviewedSupplyChainFiles": [
+    "source/setup.py",
+    "source/setup.cfg",
+    "source/MANIFEST.in",
+    "source/requirements.txt",
+    "source/docs/requirements.txt",
+    "source/tox.ini",
+    "source/.pre-commit-config.yaml",
+    "source/xhs-api/Dockerfile",
+    "source/.github/workflows/doc.yml",
+    "source/.github/workflows/pypi.yml",
+    "source/.github/workflows/test.yml"
+  ],
+  "notes": [
+    "Upstream tag associations were not fetched or verified because this review checkout used --no-tags.",
+    "The fixed tracked tests contain cookie-shaped fixture material; its value is not copied into review artifacts or validation output, was not tested, and must not be treated as user credential data.",
+    "The skill tool-index path was unavailable; no scanner, dependency installation, build, tests, browser, sign service, credential access, provider execution, or platform request was attempted."
+  ]
+}

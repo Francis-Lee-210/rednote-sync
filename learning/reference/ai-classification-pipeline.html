@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 分类流程速查</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+<main>
+  <div class="kicker">Reference · AI 分类流程</div>
+  <h1>一条帖子怎样变成可筛选标签</h1>
+  <p class="lede">分类不是让模型看标题后猜一个文件夹，而是先把不同模态转换成“内容包”，再产生有证据、可修正的结构化元数据。</p>
+
+  <div class="flow">
+    <div>1. 原始归档<small>正文、图片、视频、原链接、作者与时间</small></div>
+    <div>2. 内容提取<small>语音转写、关键帧、画面文字、原帖文案</small></div>
+    <div>3. 中性描述<small>先描述它表达什么，不急着硬分类</small></div>
+    <div>4. 多维分类<small>受控词表、置信度、证据、新标签建议</small></div>
+    <div>5. 人工筛选<small>按标签浏览，并决定是否进入 Wiki</small></div>
+  </div>
+
+  <h2>不同内容进入 AI 前的形态</h2>
+  <table>
+    <thead><tr><th>帖子类型</th><th>分类输入</th><th>主要盲点</th></tr></thead>
+    <tbody>
+      <tr><td>文字</td><td>标题、正文、作者标签</td><td>反讽、隐喻、语境缺失</td></tr>
+      <tr><td>图文</td><td>文字 + 原图 + 图中文字/画面描述</td><td>审美意义常不在正文里</td></tr>
+      <tr><td>短视频</td><td>原文案 + 语音转写 + 代表性关键帧 + 字幕</td><td>无对白、音乐、镜头节奏与叙事关系</td></tr>
+    </tbody>
+  </table>
+
+  <h2>建议的输出不是一个标签，而是一张分类卡</h2>
+  <pre>{
+  "note_id": "...",
+  "description": "雨夜街头的慢节奏短片，以旁白讨论离开熟悉城市后的失重感",
+  "topics": ["城市生活", "迁移体验"],
+  "uses": ["写作素材", "情绪参考"],
+  "forms": ["散文式短视频"],
+  "aesthetics": {
+    "moods": ["疏离", "怀旧"],
+    "visual_motifs": ["雨夜", "霓虹", "空镜"],
+    "literary_style": ["意象化", "低叙事密度"]
+  },
+  "entities": ["奥克兰"],
+  "evidence": ["旁白提到……", "关键帧显示……"],
+  "confidence": 0.74,
+  "needs_review": true,
+  "suggested_new_tags": []
+}</pre>
+
+  <div class="note"><strong>边界：</strong>“疏离”“怀旧”是模型基于可见线索给出的描述性判断，不是客观事实。保留证据、置信度和人工修正记录，才能让这种审美分类真正服务于你的个人品味。</div>
+
+  <h2>数据应放在哪里</h2>
+  <pre>raw/notes/{note_id}/...              # 不可修改的事实源
+derived/classification/{note_id}.json # 可重跑、可修正的分类卡
+taxonomy/taxonomy.yaml               # 你审核过的分类词表
+wiki/...                              # 只有你选中的内容才参与编译</pre>
+
+  <h2>新帖子不属于现有类别时</h2>
+  <div class="flow">
+    <div>尝试旧词表<small>读取标签定义、别名和正反例</small></div>
+    <div>判断未知<small>不强塞；标记低置信度或词表外</small></div>
+    <div>进入收件箱<small>保存候选标签和相似未知项</small></div>
+    <div>批量审核<small>新增、合并、改名或仍不分类</small></div>
+    <div>发布新版本<small>只重跑受到影响的帖子</small></div>
+  </div>
+  <pre>{
+  "taxonomy_version": "1.2",
+  "classification_status": "needs_taxonomy_review",
+  "matched_tags": [],
+  "proposed_tags": ["声音散步"],
+  "nearest_known_tags": ["城市漫游", "环境声音"],
+  "confidence": 0.38
+}</pre>
+  <p>第一版词表只是种子，不是永久边界。详细说明见<a href="../lessons/0002-evolving-taxonomy.html">短课：让分类体系随收藏一起生长</a>。</p>
+
+  <h2>人工修改怎样影响以后</h2>
+  <table>
+    <thead><tr><th>影响层级</th><th>系统动作</th><th>是否自动</th></tr></thead>
+    <tbody>
+      <tr><td>当前帖子</td><td>立即采用用户标签，保留原预测与差异</td><td>是</td></tr>
+      <tr><td>相似帖子</td><td>把修正帖作为检索示例，影响后续相似内容</td><td>是</td></tr>
+      <tr><td>全局规则</td><td>修改标签定义、合并类别或重跑一批旧内容</td><td>积累一致证据后，由用户批准</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><strong>原则：</strong>每次修正都学习，但单条修正不自动改写全局语义。详细说明见<a href="../lessons/0003-learning-from-corrections.html">短课：为什么一次修正不等于一条全局规则</a>。</div>
+
+  <p>返回<a href="../lessons/0001-ai-classification-pipeline.html">短课：AI 分类并不是一次调用</a>。</p>
+</main>
+</body>
+</html>

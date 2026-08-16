@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "project": "xhs-cli-export",
+  "status": "complete",
+  "phase": "complete",
+  "revision": "6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83",
+  "treeRevision": "1d3855f069146a53fd1979dac048cd1b23e2bc32",
+  "updatedAt": "2026-08-13",
+  "completedAreas": [
+    "source-frozen",
+    "tracked-inventory",
+    "review-scope-routed",
+    "architecture-and-upstream-contract",
+    "checkpoint-and-recovery",
+    "markdown-media-output",
+    "security-and-supply-chain",
+    "rednote-sync-fit-synthesis",
+    "independent-review",
+    "catalog-and-navigation-update"
+  ],
+  "pendingTasks": [],
+  "openFindings": [],
+  "reviewerFindings": [],
+  "blockedReason": null,
+  "nextProject": "Playwright",
+  "activationRule": "Completed; next project may be activated automatically under the user's revised instruction."
+}

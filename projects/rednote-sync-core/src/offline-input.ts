@@ -1,0 +1,580 @@
+import { constants } from "node:fs";
+import { lstat, open, readdir } from "node:fs/promises";
+import path from "node:path";
+import { SafeError, invalidInput } from "./errors.ts";
+import { getHostAdapter } from "./host-adapter.ts";
+import { computeContentHash } from "./merge.ts";
+import { type TransientMediaSource } from "./object-store.ts";
+import { decodeRelativePath } from "./paths.ts";
+import { createValidatedNoteRank, type ValidatedSourceRank } from "./rank.ts";
+import {
+  decodeAccount,
+  decodeAccountPartition,
+  decodeHostId,
+  decodeIsoDateTime,
+  decodeMedia,
+  decodeNote,
+  decodeNoteId,
+  decodePartitionScope,
+  decodeServerCursor,
+  sameAccount,
+  sameScope,
+  type Account,
+  type AccountPartition,
+  type MediaKind,
+  type Note,
+  type NoteId,
+  type PartitionScope,
+  type ServerCursor,
+} from "./types.ts";
+
+export type OfflineInputMode = "fixture" | "import-json";
+
+/** Aggregate-only validation output. It intentionally contains no path, body, identifier, URL, or secret. */
+export interface OfflineInputSummary {
+  readonly schemaVersion: 1;
+  readonly mode: OfflineInputMode;
+  readonly pageCount: number;
+  readonly pageItemCount: number;
+  readonly detailSuccessCount: number;
+  readonly retryItemCount: number;
+  readonly retrySuccessCount: number;
+  readonly mediaSlotCount: number;
+  readonly declaredFailureCount: number;
+  readonly mediaFailureCount: number;
+}
+
+export interface OfflineListItem {
+  readonly noteId: NoteId;
+}
+
+export interface OfflineListPage {
+  readonly scope: PartitionScope;
+  readonly requestCursor: ServerCursor | null;
+  readonly nextCursor: ServerCursor | null;
+  readonly hasMore: boolean;
+  readonly items: readonly OfflineListItem[];
+}
+
+export interface TransientMediaInput extends TransientMediaSource {
+  readonly mediaId: string;
+}
+
+export interface TransientNote {
+  readonly note: Omit<Note, "media" | "contentHash">;
+  /** Full semantic candidate bound to sourceRank; media outcomes live only in mediaSlots. */
+  readonly semanticNote: Note;
+  readonly sourceRank: ValidatedSourceRank;
+  readonly mediaSetComplete: boolean;
+  readonly mediaSources: readonly TransientMediaInput[];
+}
+
+export interface RednoteClient {
+  readonly account: AccountPartition;
+  listPage(scope: PartitionScope, requestCursor: ServerCursor | null, limit: number): Promise<OfflineListPage>;
+  getDetail(scope: PartitionScope, noteId: NoteId): Promise<TransientNote>;
+}
+
+export interface RetrySource {
+  readonly account: AccountPartition;
+  get(scope: PartitionScope, noteId: NoteId): Promise<TransientNote>;
+}
+
+export type OfflineAdapterFailureCategory = "AUTH_REQUIRED" | "RATE_LIMITED" | "NETWORK" | "PROTOCOL" | "DETAIL" | "MEDIA" | "EXPORT";
+
+/** A fixture-issued, payload-free adapter failure. Raw service messages never cross this boundary. */
+export class OfflineAdapterError extends Error {
+  readonly category: OfflineAdapterFailureCategory;
+  readonly retryAt: ReturnType<typeof decodeIsoDateTime> | null;
+
+  constructor(category: OfflineAdapterFailureCategory, retryAt: ReturnType<typeof decodeIsoDateTime> | null) {
+    super("offline adapter operation failed");
+    this.name = "OfflineAdapterError";
+    this.category = category;
+    this.retryAt = retryAt;
+    this.stack = undefined;
+    Object.freeze(this);
+  }
+}
+
+export interface FixtureSessionOptions {
+  readonly inputRoot: string;
+  readonly inputFile: string;
+  readonly mode: OfflineInputMode;
+  readonly account: AccountPartition;
+  readonly maxJsonBytes?: number;
+  readonly maxMediaBytes?: number;
+}
+
+interface DirectoryIdentity {
+  readonly path: string;
+  readonly dev: number;
+  readonly ino: number;
+}
+type DirectoryChain = ReadonlyArray<DirectoryIdentity>;
+
+const READ_ONLY_ROOT_ISSUER = Symbol("read-only-input-root-issuer");
+const FIXTURE_SESSION_ISSUER = Symbol("fixture-session-issuer");
+const ISSUED_FIXTURE_SESSIONS = new WeakSet<object>();
+
+function pathIdentity(value: string): string {
+  return value.normalize("NFC").toLocaleLowerCase("en-US");
+}
+
+async function rejectIdentityCollision(parent: string, child: string): Promise<void> {
+  const wanted = pathIdentity(child);
+  let exactMatches = 0;
+  for (const entry of await readdir(parent)) {
+    if (pathIdentity(entry) !== wanted) continue;
+    if (entry !== child) throw new SafeError("SECURITY_BOUNDARY", "Unicode or case input path collision");
+    exactMatches += 1;
+  }
+  if (exactMatches !== 1) throw new SafeError("SECURITY_BOUNDARY", "input path component missing");
+}
+
+async function inspectDirectoryChain(root: string): Promise<readonly DirectoryIdentity[]> {
+  if (root.includes("\0") || !path.isAbsolute(root)) invalidInput("input root must be absolute");
+  const resolved = path.resolve(root);
+  const parsed = path.parse(resolved);
+  const components = resolved.slice(parsed.root.length).split(path.sep).filter(Boolean);
+  const chain: DirectoryIdentity[] = [];
+  let current = parsed.root;
+  const rootInfo = await lstat(current);
+  if (rootInfo.isSymbolicLink() || !rootInfo.isDirectory()) throw new SafeError("SECURITY_BOUNDARY", "unsafe input root ancestor");
+  chain.push(Object.freeze({ path: current, dev: rootInfo.dev, ino: rootInfo.ino }));
+  for (const component of components) {
+    await rejectIdentityCollision(current, component);
+    current = path.join(current, component);
+    const info = await lstat(current);
+    if (info.isSymbolicLink() || !info.isDirectory()) throw new SafeError("SECURITY_BOUNDARY", "unsafe input root ancestor");
+    chain.push(Object.freeze({ path: current, dev: info.dev, ino: info.ino }));
+  }
+  return Object.freeze(chain);
+}
+
+async function verifyDirectoryChain(chain: readonly DirectoryIdentity[]): Promise<void> {
+  for (const expected of chain) {
+    const current = await lstat(expected.path);
+    if (current.isSymbolicLink() || !current.isDirectory() || current.dev !== expected.dev || current.ino !== expected.ino) {
+      throw new SafeError("SECURITY_BOUNDARY", "input ancestor changed during read");
+    }
+  }
+}
+
+function positiveLimit(value: unknown, fallback: number): number {
+  if (value === undefined) return fallback;
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 1) invalidInput("invalid input byte limit");
+  return value;
+}
+
+/** A capability that only opens existing regular files below an immutable root identity. */
+export class ReadOnlyInputRoot {
+  readonly #root: string;
+  readonly #chain: readonly DirectoryIdentity[];
+
+  constructor(token: symbol, root: string, chain: DirectoryChain) {
+    if (token !== READ_ONLY_ROOT_ISSUER) throw new SafeError("SECURITY_BOUNDARY", "input capability must be factory-issued");
+    this.#root = root;
+    this.#chain = chain;
+    Object.freeze(this);
+  }
+
+  static async open(root: string): Promise<ReadOnlyInputRoot> {
+    const chain = await inspectDirectoryChain(root);
+    return new ReadOnlyInputRoot(READ_ONLY_ROOT_ISSUER, path.resolve(root), chain);
+  }
+
+  async read(relativeInput: unknown, signal: AbortSignal, maxBytes: number): Promise<Uint8Array> {
+    if (signal.aborted) throw new SafeError("STATE", "input read aborted");
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1) invalidInput("invalid input byte limit");
+    const relative = decodeRelativePath(relativeInput);
+    const parts = relative.split("/");
+    let current = this.#root;
+    const descendants: DirectoryIdentity[] = [];
+    await verifyDirectoryChain(this.#chain);
+    for (const component of parts.slice(0, -1)) {
+      await rejectIdentityCollision(current, component);
+      current = path.join(current, component);
+      const info = await lstat(current);
+      if (info.isSymbolicLink() || !info.isDirectory()) throw new SafeError("SECURITY_BOUNDARY", "unsafe input path ancestor");
+      descendants.push(Object.freeze({ path: current, dev: info.dev, ino: info.ino }));
+    }
+    const leaf = parts.at(-1)!;
+    await rejectIdentityCollision(current, leaf);
+    const target = path.join(current, leaf);
+    if (!target.startsWith(`${this.#root}${path.sep}`)) throw new SafeError("SECURITY_BOUNDARY", "input path escaped root");
+    const before = await lstat(target);
+    if (before.isSymbolicLink() || !before.isFile() || before.size > maxBytes) throw new SafeError("SECURITY_BOUNDARY", "unsafe input file");
+    const handle = await open(target, constants.O_RDONLY | constants.O_NOFOLLOW);
+    try {
+      const opened = await handle.stat();
+      if (!opened.isFile() || opened.dev !== before.dev || opened.ino !== before.ino || opened.size !== before.size || opened.size > maxBytes) {
+        throw new SafeError("SECURITY_BOUNDARY", "input changed during open");
+      }
+      const chunks: Uint8Array[] = [];
+      let total = 0;
+      while (true) {
+        if (signal.aborted) throw new SafeError("STATE", "input read aborted");
+        const buffer = Buffer.allocUnsafe(Math.min(64 * 1024, maxBytes - total + 1));
+        const { bytesRead } = await handle.read(buffer, 0, buffer.byteLength, null);
+        if (bytesRead === 0) break;
+        total += bytesRead;
+        if (total > maxBytes) throw new SafeError("SECURITY_BOUNDARY", "input exceeds byte limit");
+        chunks.push(buffer.subarray(0, bytesRead));
+      }
+      const afterRead = await handle.stat();
+      const afterPath = await lstat(target);
+      if (afterRead.dev !== opened.dev || afterRead.ino !== opened.ino || afterRead.size !== total
+        || afterPath.isSymbolicLink() || afterPath.dev !== opened.dev || afterPath.ino !== opened.ino) {
+        throw new SafeError("SECURITY_BOUNDARY", "input changed during read");
+      }
+      await verifyDirectoryChain(this.#chain);
+      await verifyDirectoryChain(descendants);
+      return Buffer.concat(chunks, total);
+    } finally {
+      await handle.close();
+    }
+  }
+}
+
+interface DecodedDetail {
+  readonly note: Omit<Note, "media" | "contentHash">;
+  readonly semanticNote: Note;
+  readonly sourceRank: ValidatedSourceRank;
+  readonly mediaSetComplete: boolean;
+  readonly mediaSources: readonly TransientMediaInput[];
+  readonly mediaFailureCount: number;
+}
+
+interface DecodedPage extends OfflineListPage {
+  readonly details: ReadonlyMap<NoteId, DecodedDetail | OfflineAdapterError>;
+  readonly listFailure: OfflineAdapterError | null;
+}
+
+interface DecodedRetryItem {
+  readonly scope: PartitionScope;
+  readonly noteId: NoteId;
+  readonly detail: DecodedDetail | OfflineAdapterError;
+}
+
+interface DecodedEnvelope {
+  readonly schemaVersion: 1;
+  readonly mode: OfflineInputMode;
+  readonly account: Account;
+  readonly pages: readonly DecodedPage[];
+  readonly retryItems: readonly DecodedRetryItem[];
+}
+
+function exactRecord(value: unknown, fields: readonly string[]): Record<string, unknown> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) invalidInput("invalid offline input object");
+  const record = value as Record<string, unknown>;
+  const actual = Object.keys(record).sort();
+  const expected = [...fields].sort();
+  if (actual.length !== expected.length || actual.some((field, index) => field !== expected[index])) invalidInput("unexpected offline input fields");
+  return record;
+}
+
+function decodeMode(value: unknown): OfflineInputMode {
+  if (value !== "fixture" && value !== "import-json") invalidInput("invalid offline input mode");
+  return value;
+}
+
+function decodeAdapterFailure(value: unknown, allowed: readonly OfflineAdapterFailureCategory[]): OfflineAdapterError {
+  const raw = exactRecord(value, ["category", "retryAt"]);
+  if (typeof raw.category !== "string" || !allowed.includes(raw.category as OfflineAdapterFailureCategory)) invalidInput("invalid offline adapter failure category");
+  const retryAt = raw.retryAt === null ? null : decodeIsoDateTime(raw.retryAt);
+  if (raw.category !== "RATE_LIMITED" && retryAt !== null) invalidInput("only rate failures may carry retryAt");
+  return new OfflineAdapterError(raw.category as OfflineAdapterFailureCategory, retryAt);
+}
+
+function decodeNullableCursor(value: unknown): ServerCursor | null {
+  return value === null ? null : decodeServerCursor(value);
+}
+
+function mediaKey(kind: MediaKind, ordinal: number): string {
+  return `${kind}\u0000${ordinal}`;
+}
+
+function assertScopeMembership(scope: PartitionScope, note: Note): void {
+  if (!note.memberships.some((membership) => membership.target === scope.target && membership.boardId === scope.boardId)) {
+    invalidInput("detail note is outside page scope");
+  }
+}
+
+function decodeDetail(value: unknown, scope: PartitionScope, input: ReadOnlyInputRoot, maxMediaBytes: number): DecodedDetail {
+  const raw = exactRecord(value, ["note", "revisionAt", "claimedPayloadSha256", "mediaSetComplete", "media"]);
+  if (typeof raw.mediaSetComplete !== "boolean" || !Array.isArray(raw.media)) invalidInput("invalid offline detail");
+  const noteRaw = exactRecord(raw.note, ["schemaVersion", "accountId", "hostId", "noteId", "publicUrl", "title", "body", "noteType", "author", "publishedAt", "updatedAt", "capturedAt", "tags", "metrics", "memberships"]);
+  const noteId = decodeNoteId(noteRaw.noteId);
+  const adapter = getHostAdapter(decodeHostId(noteRaw.hostId));
+  const authorRaw = exactRecord(noteRaw.author, ["id", "name", "publicUrl"]);
+  if (typeof noteRaw.publicUrl !== "string" || authorRaw.publicUrl !== null && typeof authorRaw.publicUrl !== "string") invalidInput("invalid imported public URL");
+  const sanitizedAuthor = { ...authorRaw, publicUrl: adapter.normalizeAuthorPublicUrl(authorRaw.publicUrl) };
+  const decoded = decodeNote({ ...noteRaw, noteId, publicUrl: adapter.sanitizeImportedUrl(noteRaw.publicUrl, noteId), author: sanitizedAuthor, media: [], contentHash: "0".repeat(64) });
+  const semanticNote = Object.freeze({ ...decoded, contentHash: computeContentHash(decoded) });
+  if (!sameAccount(semanticNote, scope)) invalidInput("detail account provenance mismatch");
+  assertScopeMembership(scope, semanticNote);
+  const note: Omit<Note, "media" | "contentHash"> = Object.freeze({
+    schemaVersion: semanticNote.schemaVersion,
+    accountId: semanticNote.accountId,
+    hostId: semanticNote.hostId,
+    noteId: semanticNote.noteId,
+    publicUrl: semanticNote.publicUrl,
+    title: semanticNote.title,
+    body: semanticNote.body,
+    noteType: semanticNote.noteType,
+    author: semanticNote.author,
+    publishedAt: semanticNote.publishedAt,
+    updatedAt: semanticNote.updatedAt,
+    capturedAt: semanticNote.capturedAt,
+    tags: semanticNote.tags,
+    metrics: semanticNote.metrics,
+    memberships: semanticNote.memberships,
+  });
+  const revisionAt = raw.revisionAt === null ? null : decodeIsoDateTime(raw.revisionAt);
+  const sourceRank = createValidatedNoteRank(semanticNote, revisionAt, raw.claimedPayloadSha256 === null ? undefined : raw.claimedPayloadSha256);
+  const seen = new Set<string>();
+  let mediaFailureCount = 0;
+  const mediaSources = raw.media.map((entry): TransientMediaInput => {
+    const isFailure = entry !== null && typeof entry === "object" && !Array.isArray(entry) && Object.hasOwn(entry, "failure");
+    const item = exactRecord(entry, ["kind", "ordinal", "mediaId", isFailure ? "failure" : "relativePath"]);
+    if (item.kind !== "cover" && item.kind !== "image" && item.kind !== "video") invalidInput("invalid offline media kind");
+    if (!Number.isSafeInteger(item.ordinal) || (item.ordinal as number) < 1) invalidInput("invalid offline media ordinal");
+    const kind = item.kind;
+    const ordinal = item.ordinal as number;
+    const key = mediaKey(kind, ordinal);
+    if (seen.has(key)) invalidInput("duplicate offline media slot");
+    seen.add(key);
+    const decodedMedia = decodeMedia({ mediaId: item.mediaId, kind, ordinal, status: "failed", extension: null, object: null });
+    const relativePath = isFailure ? null : decodeRelativePath(item.relativePath);
+    const failure = isFailure ? decodeAdapterFailure(item.failure, ["MEDIA"]) : null;
+    if (failure !== null) mediaFailureCount += 1;
+    const openMedia = async (signal: AbortSignal): Promise<ReadableStream<Uint8Array>> => {
+      if (failure) throw failure;
+      const bytes = await input.read(relativePath, signal, maxMediaBytes);
+      if (signal.aborted) throw new SafeError("STATE", "input read aborted");
+      return new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(bytes);
+          controller.close();
+        },
+      });
+    };
+    return Object.freeze({ slot: Object.freeze({ kind, ordinal }), mediaId: decodedMedia.mediaId, suggestedMimeType: null, open: openMedia });
+  });
+  return Object.freeze({ note, semanticNote, sourceRank, mediaSetComplete: raw.mediaSetComplete, mediaSources: Object.freeze(mediaSources), mediaFailureCount });
+}
+
+function decodePage(value: unknown, account: AccountPartition, input: ReadOnlyInputRoot, maxMediaBytes: number): DecodedPage {
+  const hasListFailure = value !== null && typeof value === "object" && !Array.isArray(value) && Object.hasOwn(value, "listFailure");
+  const raw = exactRecord(value, ["scope", "requestCursor", "nextCursor", "hasMore", "items", "details", ...(hasListFailure ? ["listFailure"] : [])]);
+  if (typeof raw.hasMore !== "boolean" || !Array.isArray(raw.items) || !Array.isArray(raw.details) || raw.items.length > 10) invalidInput("invalid offline page");
+  const scope = decodePartitionScope(raw.scope);
+  if (!sameAccount(scope, account)) invalidInput("page account provenance mismatch");
+  const itemIds = new Set<NoteId>();
+  const items = raw.items.map((entry): OfflineListItem => {
+    const item = exactRecord(entry, ["noteId"]);
+    const noteId = decodeNoteId(item.noteId);
+    if (itemIds.has(noteId)) invalidInput("duplicate page item");
+    itemIds.add(noteId);
+    return Object.freeze({ noteId });
+  });
+  const details = new Map<NoteId, DecodedDetail | OfflineAdapterError>();
+  for (const entry of raw.details) {
+    const isFailure = entry !== null && typeof entry === "object" && !Array.isArray(entry) && Object.hasOwn(entry, "failure");
+    if (isFailure) {
+      const item = exactRecord(entry, ["noteId", "failure"]);
+      const noteId = decodeNoteId(item.noteId);
+      if (!itemIds.has(noteId) || details.has(noteId)) invalidInput("page detail provenance mismatch");
+      details.set(noteId, decodeAdapterFailure(item.failure, ["AUTH_REQUIRED", "RATE_LIMITED", "NETWORK", "PROTOCOL", "DETAIL", "EXPORT"]));
+    } else {
+      const detail = decodeDetail(entry, scope, input, maxMediaBytes);
+      if (!itemIds.has(detail.note.noteId) || details.has(detail.note.noteId)) invalidInput("page detail provenance mismatch");
+      details.set(detail.note.noteId, detail);
+    }
+  }
+  if (details.size !== items.length) invalidInput("page details must exactly match items");
+  const listFailure = hasListFailure ? decodeAdapterFailure(raw.listFailure, ["AUTH_REQUIRED", "RATE_LIMITED", "NETWORK", "PROTOCOL"]) : null;
+  if (listFailure !== null && (items.length !== 0 || details.size !== 0)) invalidInput("list failure page must not contain items");
+  return Object.freeze({
+    scope,
+    requestCursor: decodeNullableCursor(raw.requestCursor),
+    nextCursor: decodeNullableCursor(raw.nextCursor),
+    hasMore: raw.hasMore,
+    items: Object.freeze(items),
+    details,
+    listFailure,
+  });
+}
+
+function decodeRetryItem(value: unknown, account: AccountPartition, input: ReadOnlyInputRoot, maxMediaBytes: number): DecodedRetryItem {
+  const raw = exactRecord(value, ["scope", "noteId", "detail"]);
+  const scope = decodePartitionScope(raw.scope);
+  if (!sameAccount(scope, account)) invalidInput("retry account provenance mismatch");
+  const noteId = decodeNoteId(raw.noteId);
+  const isFailure = raw.detail !== null && typeof raw.detail === "object" && !Array.isArray(raw.detail) && Object.hasOwn(raw.detail, "failure");
+  let detail: DecodedDetail | OfflineAdapterError;
+  if (isFailure) {
+    const failure = exactRecord(raw.detail, ["failure"]);
+    detail = decodeAdapterFailure(failure.failure, ["AUTH_REQUIRED", "RATE_LIMITED", "NETWORK", "PROTOCOL", "DETAIL", "EXPORT"]);
+  } else {
+    detail = decodeDetail(raw.detail, scope, input, maxMediaBytes);
+    if (detail.note.noteId !== noteId) invalidInput("retry note provenance mismatch");
+  }
+  return Object.freeze({ scope, noteId, detail });
+}
+
+function decodeEnvelope(value: unknown, input: ReadOnlyInputRoot, maxMediaBytes: number): DecodedEnvelope {
+  const raw = exactRecord(value, ["schemaVersion", "mode", "account", "pages", "retryItems"]);
+  if (raw.schemaVersion !== 1 || !Array.isArray(raw.pages) || !Array.isArray(raw.retryItems)) invalidInput("unsupported offline input schema");
+  const mode = decodeMode(raw.mode);
+  const account = decodeAccount(raw.account);
+  const accountPartition = Object.freeze({ accountId: account.accountId, hostId: account.hostId });
+  const pages = raw.pages.map((page) => decodePage(page, accountPartition, input, maxMediaBytes));
+  const pageKeys = new Set<string>();
+  for (const page of pages) {
+    const key = `${page.scope.hostId}\u0000${page.scope.accountId}\u0000${page.scope.target}\u0000${page.scope.boardId ?? ""}\u0000${page.requestCursor ?? ""}`;
+    if (pageKeys.has(key)) invalidInput("ambiguous offline page provenance");
+    pageKeys.add(key);
+  }
+  const retryItems = raw.retryItems.map((item) => decodeRetryItem(item, accountPartition, input, maxMediaBytes));
+  const retryKeys = new Set<string>();
+  for (const item of retryItems) {
+    const key = `${item.scope.hostId}\u0000${item.scope.accountId}\u0000${item.scope.target}\u0000${item.scope.boardId ?? ""}\u0000${item.noteId}`;
+    if (retryKeys.has(key)) invalidInput("ambiguous retry item provenance");
+    retryKeys.add(key);
+  }
+  return Object.freeze({ schemaVersion: 1, mode, account, pages: Object.freeze(pages), retryItems: Object.freeze(retryItems) });
+}
+
+function summarizeEnvelope(envelope: DecodedEnvelope): OfflineInputSummary {
+  const pageDetails = envelope.pages.flatMap((page) => [...page.details.values()]);
+  const retryDetails = envelope.retryItems.map((item) => item.detail);
+  const successfulDetails = [...pageDetails, ...retryDetails].filter((detail): detail is DecodedDetail => !(detail instanceof OfflineAdapterError));
+  const adapterFailureCount = envelope.pages.filter((page) => page.listFailure !== null).length
+    + pageDetails.filter((detail) => detail instanceof OfflineAdapterError).length
+    + retryDetails.filter((detail) => detail instanceof OfflineAdapterError).length;
+  const mediaFailureCount = successfulDetails.reduce((total, detail) => total + detail.mediaFailureCount, 0);
+  return Object.freeze({
+    schemaVersion: 1,
+    mode: envelope.mode,
+    pageCount: envelope.pages.length,
+    pageItemCount: envelope.pages.reduce((total, page) => total + page.items.length, 0),
+    detailSuccessCount: pageDetails.filter((detail) => !(detail instanceof OfflineAdapterError)).length,
+    retryItemCount: envelope.retryItems.length,
+    retrySuccessCount: retryDetails.filter((detail) => !(detail instanceof OfflineAdapterError)).length,
+    mediaSlotCount: successfulDetails.reduce((total, detail) => total + detail.mediaSources.length, 0),
+    declaredFailureCount: adapterFailureCount + mediaFailureCount,
+    mediaFailureCount,
+  });
+}
+
+function cursorEqual(left: ServerCursor | null, right: ServerCursor | null): boolean {
+  return left === right;
+}
+
+function findPage(pages: readonly DecodedPage[], scope: PartitionScope, requestCursor: ServerCursor | null): DecodedPage {
+  const matches = pages.filter((page) => sameScope(page.scope, scope) && cursorEqual(page.requestCursor, requestCursor));
+  if (matches.length !== 1) invalidInput("offline page provenance match must be unique");
+  return matches[0]!;
+}
+
+function findRetry(items: readonly DecodedRetryItem[], scope: PartitionScope, noteId: NoteId): DecodedRetryItem {
+  const matches = items.filter((item) => sameScope(item.scope, scope) && item.noteId === noteId);
+  if (matches.length !== 1) invalidInput("retry source match must be unique");
+  return matches[0]!;
+}
+
+export class FixtureSession {
+  readonly account: Account;
+  readonly client: RednoteClient;
+  readonly retrySource: RetrySource;
+  readonly mode: OfflineInputMode;
+  readonly summary: OfflineInputSummary;
+  #closed = false;
+  #listCalls = 0;
+  #activePage: DecodedPage | null = null;
+  #detailCalls = 0;
+  #retryCalls = 0;
+
+  constructor(token: symbol, envelope: DecodedEnvelope) {
+    if (token !== FIXTURE_SESSION_ISSUER) throw new SafeError("SECURITY_BOUNDARY", "fixture session must be factory-issued");
+    this.account = envelope.account;
+    this.mode = envelope.mode;
+    this.summary = summarizeEnvelope(envelope);
+    const account = Object.freeze({ accountId: envelope.account.accountId, hostId: envelope.account.hostId });
+    const assertOpen = () => {
+      if (this.#closed) throw new SafeError("STATE", "offline session is closed");
+    };
+    const listPage = async (scopeInput: PartitionScope, cursorInput: ServerCursor | null, limit: number): Promise<OfflineListPage> => {
+      assertOpen();
+      if (this.#listCalls !== 0) throw new SafeError("STATE", "offline session permits one list page");
+      this.#listCalls += 1;
+      const scope = decodePartitionScope(scopeInput);
+      if (!sameAccount(scope, account)) invalidInput("client account provenance mismatch");
+      const requestCursor = cursorInput === null ? null : decodeServerCursor(cursorInput);
+      if (!Number.isSafeInteger(limit) || limit < 1 || limit > 10) invalidInput("list limit must be 1..10");
+      const page = findPage(envelope.pages, scope, requestCursor);
+      if (page.items.length > limit) invalidInput("offline page exceeds requested limit");
+      if (page.listFailure) throw page.listFailure;
+      this.#activePage = page;
+      return Object.freeze({ scope: page.scope, requestCursor: page.requestCursor, nextCursor: page.nextCursor, hasMore: page.hasMore, items: page.items });
+    };
+    const getDetail = async (scopeInput: PartitionScope, noteIdInput: NoteId): Promise<TransientNote> => {
+      assertOpen();
+      const scope = decodePartitionScope(scopeInput);
+      const noteId = decodeNoteId(noteIdInput);
+      const page = this.#activePage;
+      if (!page || !sameScope(page.scope, scope) || !page.items.some((item) => item.noteId === noteId)) invalidInput("detail is outside active page");
+      const detail = page.details.get(noteId);
+      if (!detail) invalidInput("detail provenance match must be unique");
+      this.#detailCalls += 1;
+      if (detail instanceof OfflineAdapterError) throw detail;
+      return detail;
+    };
+    const getRetry = async (scopeInput: PartitionScope, noteIdInput: NoteId): Promise<TransientNote> => {
+      assertOpen();
+      const scope = decodePartitionScope(scopeInput);
+      const noteId = decodeNoteId(noteIdInput);
+      if (!sameAccount(scope, account)) invalidInput("retry account provenance mismatch");
+      this.#retryCalls += 1;
+      const detail = findRetry(envelope.retryItems, scope, noteId).detail;
+      if (detail instanceof OfflineAdapterError) throw detail;
+      return detail;
+    };
+    this.client = Object.freeze({ account, listPage, getDetail });
+    this.retrySource = Object.freeze({ account, get: getRetry });
+    ISSUED_FIXTURE_SESSIONS.add(this);
+    Object.freeze(this);
+  }
+
+  static async open(options: FixtureSessionOptions): Promise<FixtureSession> {
+    const expectedMode = decodeMode(options.mode);
+    const expectedAccount = decodeAccountPartition(options.account);
+    const maxJsonBytes = positiveLimit(options.maxJsonBytes, 16 * 1024 * 1024);
+    const maxMediaBytes = positiveLimit(options.maxMediaBytes, 512 * 1024 * 1024);
+    const input = await ReadOnlyInputRoot.open(options.inputRoot);
+    const bytes = await input.read(options.inputFile, new AbortController().signal, maxJsonBytes);
+    const text = Buffer.from(bytes).toString("utf8");
+    if (!Buffer.from(text, "utf8").equals(Buffer.from(bytes))) invalidInput("offline input must be valid UTF-8");
+    let parsed: unknown;
+    try { parsed = JSON.parse(text); } catch { invalidInput("offline input must be valid JSON"); }
+    const envelope = decodeEnvelope(parsed, input, maxMediaBytes);
+    if (envelope.mode !== expectedMode) invalidInput("offline adapter mode provenance mismatch");
+    if (!sameAccount(envelope.account, expectedAccount)) invalidInput("offline account provenance mismatch");
+    return new FixtureSession(FIXTURE_SESSION_ISSUER, envelope);
+  }
+
+  close(): void {
+    this.#closed = true;
+    this.#activePage = null;
+  }
+
+  usage(): Readonly<{ listCalls: number; detailCalls: number; retryCalls: number }> {
+    return Object.freeze({ listCalls: this.#listCalls, detailCalls: this.#detailCalls, retryCalls: this.#retryCalls });
+  }
+}
+
+export function assertFixtureSession(value: unknown): asserts value is FixtureSession {
+  if (value === null || typeof value !== "object" || !ISSUED_FIXTURE_SESSIONS.has(value)) throw new SafeError("SECURITY_BOUNDARY", "offline session must be factory-issued");
+}

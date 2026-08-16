@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>短课：AI 分类并不是一次调用</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+<main>
+  <div class="kicker">Lesson 0001 · 约 7 分钟</div>
+  <h1>AI 分类并不是“一篇帖子，一个标签”</h1>
+  <p class="lede">你的真正设计对象是一条可审计的流水线：AI 先看懂内容，再学习你的分类语言，最后才对全库执行稳定分类。</p>
+
+  <h2>先看三种方案为什么不同</h2>
+  <table>
+    <thead><tr><th>方案</th><th>怎么运行</th><th>问题</th></tr></thead>
+    <tbody>
+      <tr><td>预设分类</td><td>你先写完整标签表，AI 从中选择</td><td>稳定，但容易漏掉你收藏中独特的文学和审美兴趣</td></tr>
+      <tr><td>完全开放</td><td>AI 对每篇帖子自由造标签</td><td>发现力强，但 2000 篇后会产生大量同义词和粒度冲突</td></tr>
+      <tr><td>混合方案</td><td>先开放观察一个样本，再由你审核并冻结第一版词表</td><td>多一步审核，但兼顾个人性与一致性</td></tr>
+    </tbody>
+  </table>
+
+  <h2>推荐执行方式：发现期与执行期分开</h2>
+  <h3>阶段 A：用一个代表性样本发现你的分类语言</h3>
+  <ol>
+    <li>从全库抽取约 100–200 条，覆盖文字、图文、视频和审美类内容。</li>
+    <li>AI 先为每条生成中性描述与开放标签，不要求归入固定目录。</li>
+    <li>相似度工具把内容和标签聚到一起；LLM 负责解释这些簇可能代表什么。</li>
+    <li>你合并近义词、删除空洞标签、命名真正符合自己思维方式的类别。</li>
+  </ol>
+  <p>这里的向量只帮助发现“哪些帖子可能相似”。官方的 <a href="https://platform.openai.com/docs/guides/embeddings">Embeddings 指南</a>将向量表示用于相似性、聚类和分类等任务；它不是原帖数据库，也不替你决定类别。</p>
+
+  <h3>阶段 B：用审核后的词表处理剩余内容</h3>
+  <ol>
+    <li>模型优先从已有标签中多选，并输出结构化 JSON。</li>
+    <li>每项判断同时保留简短证据和置信度。</li>
+    <li>低置信度、需要新标签、或多模态信息不完整的帖子进入人工复核队列。</li>
+    <li>你按分类卡筛选内容，最终决定是否进入 Wiki。</li>
+  </ol>
+
+  <h2>间接表达和美学内容怎么处理</h2>
+  <p>不要直接问模型“这是什么类别”，先要求它分开输出两个层次：</p>
+  <ul>
+    <li><strong>可观察层：</strong>出现了哪些人物、场景、颜色、意象、措辞、叙事形式和声音。</li>
+    <li><strong>解释层：</strong>可能的主题、情绪、文学风格和收藏用途，并明确这是推断。</li>
+  </ul>
+  <p>例如，模型不能把“孤独”当成事实，但可以写成：“连续空镜、单人远景和低饱和画面支持‘疏离’这一审美标签，置信度中等。”这样你能判断它是否真的理解了你的收藏理由。</p>
+
+  <h2>短视频并不需要整段直接塞给一个模型</h2>
+  <p>第一版可以把视频拆成几条证据流：原帖文案、语音转写、字幕、代表性关键帧和基础媒体信息。语音可以通过转写接口变成带时间片段的文本；关键帧可以作为图像输入交给视觉模型。相关能力可见官方的 <a href="https://platform.openai.com/docs/guides/speech-to-text">Speech-to-text</a> 与 <a href="https://platform.openai.com/docs/guides/images-vision">Images and vision</a> 指南。</p>
+  <div class="note">对无对白的氛围视频，画面、镜头节奏和音乐共同承担意义。第一版可以先承认“不确定”，而不是强行给出深层主题；这类内容自然进入人工复核队列。</div>
+
+  <h2>最重要的工程边界</h2>
+  <p>原帖永远保留在不可变的 <code>raw</code> 层。分类结果写入独立 sidecar JSON，可以重新生成、比较模型版本，也能保存你的修改。随后只有你选中的内容才进入 LLM Wiki。这与 <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">Karpathy 的三层思路</a>一致：事实源、可维护的知识层和操作规范彼此分离。</p>
+
+  <div class="decision">
+    <strong>你现在需要决定的不是模型，而是发现流程。</strong>
+    <p>是否愿意先让 100–200 条代表性帖子经历一次“开放描述 → 聚类 → 人工命名”，用它们长出第一版个人分类词表？</p>
+  </div>
+
+  <p>下一课：<a href="0002-evolving-taxonomy.html">让分类体系随收藏一起生长</a>。速查版：<a href="../reference/ai-classification-pipeline.html">一条帖子怎样变成可筛选标签</a>。如果任何步骤仍然抽象，继续向 agent 追问，并尽量拿一条真实帖子做例子。</p>
+</main>
+</body>
+</html>

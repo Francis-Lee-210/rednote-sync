@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "project": "MediaCrawler",
+  "status": "complete",
+  "phase": "complete",
+  "revision": "5665a271ef15e0ec82b1f48a951b66760e054db9",
+  "treeRevision": "4ba6c7c4112eb47a1e8b21e973088f818743fed0",
+  "updatedAt": "2026-08-13",
+  "completedAreas": [
+    "source-frozen",
+    "tracked-inventory",
+    "review-scope-routed",
+    "architecture-acquisition-data-flow",
+    "discovery-detail-media-storage",
+    "browser-session-auth-risk",
+    "checkpoint-retry-error-semantics",
+    "api-webui-capabilities-security",
+    "dependencies-ci-license",
+    "rednote-sync-fit-synthesis",
+    "independent-evidence-review",
+    "independent-security-review",
+    "independent-supply-license-fit-review",
+    "catalog-and-navigation-update"
+  ],
+  "pendingTasks": [],
+  "openFindings": [],
+  "reviewerFindings": [
+    {"review": "evidence-and-links", "status": "pass", "open": 0},
+    {"review": "security-and-capability", "status": "pass", "open": 0},
+    {"review": "supply-license-and-fit", "status": "pass", "open": 0}
+  ],
+  "blockedReason": null,
+  "nextProject": "xiaohongshu-mcp",
+  "activationRule": "Activate the next project automatically only after this checkpoint is complete."
+}
