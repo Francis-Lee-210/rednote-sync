@@ -21,9 +21,11 @@
 | xiaohongshu-importer | B | **完成；独立复审通过** | `b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37` | 维持 B 级知识库输出与交互参考；现成采集、解析、下载、状态和生产接入均为 D；见[专项源码审查](xiaohongshu-importer/review.md) |
 | Spider_XHS | B | **完成；独立复审通过** | `2030f5d4454e556ad7a9caa83b3ec532d4df20c7` | 维持 B 级单页接口、字段与cursor边界参考；全量循环、状态/媒体、远端程序、登录/写操作、Docker及源码复用均为 D；见[专项源码审查](Spider_XHS/review.md) |
 | XHS_ALL_IN_ONE | B | **完成；独立复审通过** | `63b85de2b15b3f79134b08fa675381505f45d4db` | 维持 B 级 Adapter/审计/逐项状态参考；状态/媒体恢复、部署、安全、自动运营、平台写和源码复用均为 D；见[专项源码审查](XHS_ALL_IN_ONE/review.md) |
+| xhs_web_crawler | D | **完成；评级修订并复审通过** | `8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50` | 调整为 B：原生 MV3 点击—关闭—滚动状态机和 userscript→Chrome Extension 分层值得参考；只作为详情缺口 fallback，不作为大批量主扫描；见[专项源码审查](xhs-web-crawler/review.md) |
+| RedCaChe | 未纳入 | **完成；专项研究通过** | `b3526e66ed1d5b78e35a390edf1b7f29e1399ee9` | 研究价值 A、采用参考 B：重点参考纯扩展四层分工、本地人工 review、URL 身份分离及受控平台写意图；当前 checkpoint、媒体和取消收藏实现不直接采用；见[专项源码审查](redcache/review.md) |
 | Playwright 浏览器路线专题 | B | **完成；独立复审通过** | 综合固定报告，无独立源码 revision | Playwright 底层执行能力为 A 级 Stage 4 采用评估；“模拟人工可降低风控”为 D；见[综合专题](topics/playwright-human-like-route.md) |
 
-12 个仓库对象和 1 个非仓库 Playwright 综合专题均已完成，并通过独立复审。当前队列没有活动对象。
+14 个仓库对象和 1 个非仓库 Playwright 综合专题均已完成静态研究。当前队列没有活动对象。
 
 ## 1. 结论先行
 
@@ -34,6 +36,8 @@
 3. **xhs-cli-export**：参考增量水位、失败时不推进 checkpoint、逐条中间结果和 Markdown 输出；它依赖另一个上游 CLI，且不下载视频。
 4. **Playwright**：参考未来阶段四的自有浏览器适配器底座；它提供可靠的浏览器控制，不提供小红书业务语义，也不提供账号安全保证。
 5. **xiaohongshu-cli**：参考机器可处理的错误分类、Cookie/token 生命周期、抖动与退避；逆向签名、宽泛浏览器凭据读取和大量写操作使它不适合直接接入。
+6. **xhs_web_crawler**：参考原生 Chrome Extension 中 popup/content/worker 的职责拆分，以及有预算的点击详情 fallback；大批量发现仍以现有 userscript 的列表响应拦截为主。
+7. **RedCaChe**：参考“浏览器会话留在浏览器、观察进入本地资料库、人工 review 与平台写分离”的产品形态；其纯扩展和旧服务器是两套不互通实现，不能把二者能力拼成一个现成方案。
 
 当前阶段三仍应保持完全离线。所有 Cookie、浏览器、签名、远端 API 和平台风控处理只能进入未来阶段四的可替换适配器，不应渗入 [`sync-core.md`](../projects/rednote-sync-core/docs/sync-core.md)。
 
@@ -76,8 +80,9 @@
 | [ReaJason/xhs](https://github.com/ReaJason/xhs) | 2,200 | 收藏/点赞分页、详情、媒体字段和异常类型 | Cookie、Playwright/stealth 或签名服务 | 2025-07；MIT | **B** |
 | [Playwright MCP](https://github.com/microsoft/playwright-mcp) | 36,014 | DOM 探索、诊断和人工登录/验证码恢复 | 持久浏览器 profile、Agent 工具权限 | 2026-08；Apache-2.0 | **B** |
 | 使用 Playwright 模拟人工操作 | — | 阶段四浏览器获取路线 | 自行实现限速、暂停、checkpoint | 不是现成方案 | **B**；若作为反风控保证则 **D/未知** |
+| [RedCaChe](https://github.com/ValerieTse/RedCaChe) | — | saved 导入、本地资料库、人工 review、Chrome 扩展边界 | 登录态 DOM；扩展 IndexedDB，或旧版 Playwright/SQLite | 2026-07；MIT；两套实现数据不互通 | **A（研究）/B（采用参考）** |
 | [justoneapi-python](https://github.com/justoneapi/justoneapi-python) | 240 | 条件性的商业远端详情 provider | 付费 API、query token、数据外发 | 2026-08 有含自动空提交的仓库活动；MIT 条款完整但版权归属行未填写 | **C** |
-| [xhs_web_crawler](https://github.com/leafiy/xhs_web_crawler) | 55 | 仅剩 HAR 离线解析概念 | 已登录 Chrome、敏感 HAR | 2025-02；README 声称 MIT 但 LICENSE 缺失，另含禁止商业用途声明 | **D** |
+| [xhs_web_crawler](https://github.com/leafiy/xhs_web_crawler) | 55 | 原生扩展点击/滚动 fallback、userscript 插件化边界、HAR 反例 | 已登录 Chrome、DOM selector；人工 HAR 可含敏感材料 | 2025-02；README 声称 MIT但 LICENSE 缺失，另含禁止商业用途声明 | **B** |
 | [Postman Spider collection](https://www.postman.com/solar-flare-375895/spider/collection/vykmhw7/) | — | 历史请求类别目录 | 来源、版本和认证未知 | 无可确认许可证/日期 | **D** |
 | [阿里云文章 1689270](https://developer.aliyun.com/article/1689270) | — | 泛化 HTTP 示例 | 无小红书第一方证据 | 用户投稿文章 | **D** |
 | [阿里云文章 1661722](https://developer.aliyun.com/article/1661722) | — | 本次无法取得正文 | 全部未知 | 本次工具无法读取 | **D** |
@@ -149,6 +154,14 @@ Star 数量来自 GitHub 官方仓库元数据，是 2026-08-12 的动态快照�
 
 专项审查进一步确认：外层必须实现 `ProfileLease + SessionBinding`；Download/HAR/Trace 不能作为 canonical 媒体或脱敏证据；context-bound HTTP 会读写浏览器 Cookie；网络暴露的 `launchServer` 应排除。Playwright 的自动等待和 `slowMo` 不是反检测能力。A 级只表示它值得阶段四采用评估，不表示已经解决小红书获取或账号风险。[Apache-2.0 LICENSE](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/LICENSE)
 
+### 4.6 RedCaChe
+
+**专项研究状态。** 固定 revision 的 tracked-only 源码审查已完成，详见[专项源码审查报告](redcache/review.md)和[来源记录](redcache/provenance.json)。结论区分“研究价值”和“采用价值”：它是 **A 级值得研究对象**，但当前实现仅按 **B 级局部设计参考**采用。
+
+RedCaChe 与 Rednote Sync 的问题域最接近之处，是把 saved 列表发现、本地资料库、人工 review、受控取消收藏意图和 Obsidian 导出放在一个产品叙事中。最新纯 MV3 扩展进一步给出了 `content script → service worker → IndexedDB → dashboard` 的最小切面，且 host 权限只限于两个官方域名。这对 userscript 升级为 Chrome 插件很有参考价值。
+
+不过纯扩展会先把一次扫描全部保存在内存，完成后才入库；没有 run/page checkpoint、服务端 cursor、全量完成证明或可恢复详情队列。其取消收藏 handler 未接 UI，却可在空 ID 时处理全部待移除项，缺少备份、冻结清单、二次确认和逐项审计。旧服务器虽有 ImportRun、备份和 Obsidian exporter，但与扩展数据不互通，也存在无鉴权本地控制面、hidden/headless 写操作和规格漂移。建议只 clean-room 借鉴分层、人工状态机、稳定 URL/临时打开 URL 分离和 action intent；状态、媒体、身份绑定与平台写流程必须重新设计。
+
 ## 5. B 级：只参考部分组件或边界
 
 ### 5.1 xiaohongshu-importer
@@ -215,6 +228,14 @@ Playwright MCP 将通用浏览器操作暴露给 Agent，支持持久或 isolate
 
 真实页面点击、滚动、延迟、persistent profile、真实浏览器或 CDP 都不是平台许可、账号安全或降低封禁概率的证明；stealth、验证码求解、代理/账号轮换、指纹伪装和签名绕过明确排除。因此 Playwright 执行底座为 A 级评估对象，但“模拟人工可降低风控”的主张为 **D（无证据）**。
 
+### 5.9 xhs_web_crawler
+
+**评级修订。** 固定 revision 的专项静态审查已完成，详见[专项源码审查报告](xhs-web-crawler/review.md)。此前 D 级结论过度聚焦未接通的 HAR/CDP 路线，遗漏了真实存在的原生 MV3 DOM 状态机，因此调整为 **B：值得研究、局部设计参考**。
+
+项目确实会按卡片逐篇点击、等待详情、关闭弹层，再滚动加载更多，但不是 Playwright，而是 popup、content script 和原生 DOM/Chrome API。README 实证范围是关键词搜索，并非收藏/点赞专项；若在收藏或点赞页使用，只能在 selector 仍兼容时作为条件性 fallback。默认成功路径理想最低约 3.5 秒/篇，2000 篇仅固定等待就接近两小时，因此不能替代现有 userscript 的列表响应发现。
+
+建议组合是：userscript/MAIN-world bridge 负责批量列表发现和稳定 `note_id`；只有新增、变化或字段不足项进入有预算、可取消、可 checkpoint 的点击详情队列。若升级为 Chrome 插件，借鉴 popup/content/service-worker/storage 的职责分层，但重新实现精确 host 权限、稳定 ID、条件等待、任务预算和版本化脱敏输出。当前 background/CDP/HAR 接线不可用，许可证冲突仍禁止源码复制。
+
 ## 6. C 级：条件性备选和风险背景
 
 ### 6.1 justoneapi-python
@@ -237,21 +258,15 @@ Playwright MCP 将通用浏览器操作暴露给 Agent，支持持久或 isolate
 
 ## 7. D 级：当前排除
 
-### 7.1 xhs_web_crawler
-
-该原型要求已登录 Chrome、模拟点击，并把 DevTools 导出的 HAR 解析为 JSON。[README](https://github.com/leafiy/xhs_web_crawler/blob/main/README.md)
-
-静态检查发现 manifest 没有注册 background service worker，也缺少代码所用的 `debugger`、`webRequest`、`downloads` 等权限；执行上下文与 API 使用不一致。[manifest](https://github.com/leafiy/xhs_web_crawler/blob/main/chrome_extension/manifest.json) [background.js](https://github.com/leafiy/xhs_web_crawler/blob/main/chrome_extension/background.js) README 的“不触发反爬”没有证据；它一方面声称 MIT 并链接不存在的 LICENSE，另一方面又写有“请勿用于商业用途”，许可状态冲突/未知。“Save all as HAR with content” 还可能包含 Cookie、Authorization 和完整响应。当前只保留“浏览器采集与经脱敏后的离线样本分离”的概念，不运行或复用该项目。
-
-### 7.2 Postman Spider collection
+### 7.1 Postman Spider collection
 
 页面可访问，也能看到推荐、用户、详情、评论、搜索和验证码等请求名称，但没有第一方归属、版本、许可证、维护日期或有效性证据。[Collection](https://www.postman.com/solar-flare-375895/spider/collection/vykmhw7/) 不导入、不执行，不把请求名称当作可用接口事实。
 
-### 7.3 阿里云文章 1689270
+### 7.2 阿里云文章 1689270
 
 文章给出 API Key/Bearer Token 和 `api.xiaohongshu.com/v1/notes/{id}` 示例，但没有小红书第一方文档支持；页面也说明内容来自用户投稿、阿里云不拥有著作权且不承担责任。[文章](https://developer.aliyun.com/article/1689270) 它没有超过一般 HTTP/JSON 教程的新增价值，不作为实现依据。
 
-### 7.4 阿里云文章 1661722
+### 7.3 阿里云文章 1661722
 
 本次调研工具没有取得正文，无法验证作者、内容、来源、日期或许可。[目标链接](https://developer.aliyun.com/article/1661722) 当前按证据不足排除，不断言页面永久失效；如用户仍记得其来源和价值，可另行人工只读复核。
 
@@ -273,12 +288,13 @@ Playwright MCP 将通用浏览器操作暴露给 Agent，支持持久或 isolate
 | **M8 浏览器 profile、会话复用与隔离** | [Playwright persistent context](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context)、[认证状态](https://playwright.dev/docs/auth)、[Playwright MCP](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md) | 阶段四建立显式 `ProfileLease`：专用目录、单实例排他锁、干净关闭和崩溃恢复。明确授权的常规同步可使用 persistent profile；一次性诊断或人工恢复优先 isolated profile | 不扫描或自动复用日常 Chrome profile，不让多个 Agent 共享 profile。profile、storage state、trace 和 HAR 均为敏感材料；persistent profile、CDP 和 `slowMo` 不是反风控证明 |
 | **M9 单账号约束、身份校验与会话所有权** | [OpenCLI 身份/页面校验](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/collection-helpers.js)、[xiaohongshu-mcp login](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/login.go) | 设计 `SessionBinding(hostId, accountId, profileId, sessionRevision)`；每轮开始、checkpoint 恢复和人工重新登录后读取实际账号 ID，不一致或无法确认均以 `AUTH_REQUIRED` 暂停。同一账号只允许一个同步 owner | “已登录”不等于登录了预期账号，昵称和 fingerprint seed 都不能代替稳定账号 ID。候选项目没有完整实现跨登录、发现、详情和媒体任务的全局绑定，该设计仍待阶段四验证 |
 | **M10 Provider/Adapter 隔离与版本化 Schema 校验** | [MediaCrawler 抽象接口](https://github.com/NanmiCoder/MediaCrawler/blob/main/base/base_crawler.py)、[Just One API 资源](https://github.com/justoneapi/justoneapi-python/blob/main/justoneapi/generated/resources/xiaohongshu.py)、[Spider_XHS session owner](https://github.com/cv-cat/Spider_XHS/blob/master/xhs_utils/xhs_pc/auth.py) | 将浏览器、CLI、MCP 和 SaaS 都视为可替换 provider；只允许输出经过版本匹配、运行时 Schema 校验、敏感字段清洗和领域规范化的安全 DTO。cursor、checkpoint 和 canonical state 继续由核心独占 | 不让原始 dict、`Any/raw_json` 或 provider 自有字段直接进入 SQLite、object store 与 exporter；不复制 Spider_XHS 的私有接口和签名。接口带版本号也不等于下游字段已有类型保证 |
+| **M11 userscript 到 Chrome Extension 的职责拆分** | [xhs_web_crawler 专项审查](xhs-web-crawler/review.md)、[RedCaChe 专项审查](redcache/review.md) | 批量发现继续采用页面主世界的精确列表响应观察；content script 只做 DOM 状态识别和少量详情 fallback；service worker 负责编排短步骤；持久任务状态进入 durable store；dashboard 只展示进度和人工 review | 不把一次长 `sendMessage`、内存 Map/Set、UI index 或固定滚动次数当 checkpoint；不把纯扩展和旧服务器能力拼接成一个现成实现；平台写 capability 默认不注册 |
 
 ### 8.2 运行、安全与复用约束
 
 | 编号与可借鉴方面 | 主要参考对象 | 建议借鉴的具体设计 | 采用边界与不应照搬内容 |
 |---|---|---|---|
-| **A1 Markdown、frontmatter、目录与媒体相对路径** | [xiaohongshu-importer](https://github.com/bnchiang96/xiaohongshu-importer/blob/main/main.ts)、[xhs-cli-export](https://github.com/DoYitNow/xhs-cli-export/blob/main/src/xhs_export.py) | 借鉴分类目录、可追溯 frontmatter、媒体相对路径、原始/详情 JSON 与下载失败降级；exporter 只消费安全 canonical `Note`，派生视图可从 object store 重建 | 采集器输出格式不能反向定义核心模型；远端标题、标签和正文进入 YAML/路径前必须转义、规范化并处理碰撞。候选工具没有完整批量幂等和媒体完整性保证 |
+| **A1 Markdown、frontmatter、目录与媒体相对路径** | [xiaohongshu-importer](https://github.com/bnchiang96/xiaohongshu-importer/blob/main/main.ts)、[xhs-cli-export](https://github.com/DoYitNow/xhs-cli-export/blob/main/src/xhs_export.py)、[RedCaChe 专项审查](redcache/review.md) | 借鉴分类目录、可追溯 frontmatter、媒体相对路径、人工 review 到 Obsidian projection、原始/详情 JSON 与下载失败降级；exporter 只消费安全 canonical `Note`，派生视图可从 object store 重建 | 采集器输出格式不能反向定义核心模型；远端标题、标签和正文进入 YAML/路径前必须转义、规范化并处理碰撞。RedCaChe 扩展没有真正的浏览器下载/导出实现，两套实现数据也不互通 |
 | **A2 限速、退避与人工暂停** | [xiaohongshu-cli client](https://github.com/jackwener/xiaohongshu-cli/blob/main/xhs_cli/client.py)、[OpenCLI collection helper](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/collection-helpers.js)；MediaCrawler 作反例 | 保持一轮一页、详情/媒体串行、硬任务预算和所有循环有上限；仅瞬时网络错误及部分 5xx 可有限退避。429、验证码、登录墙或安全限制触发全局 circuit breaker，旧 progress 不变 | 平台没有公开安全频率；随机延迟、`slowMo`、高斯抖动和“模拟阅读”都不是安全证明。不得遇限制后继续批次，或自动切换网络、代理与账号 |
 | **A3 登录、验证码、风控与签名错误分类** | [xiaohongshu-cli exceptions](https://github.com/jackwener/xiaohongshu-cli/blob/main/xhs_cli/exceptions.py)、[输出 Schema](https://github.com/jackwener/xiaohongshu-cli/blob/main/SCHEMA.md)、[OpenCLI note](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/note.js) | adapter 内区分 `AUTH_REQUIRED`、`VERIFICATION_REQUIRED`、`RATE_LIMITED`、`SECURITY_BLOCK`、`SIGNATURE_REJECTED`、`CONTENT_UNAVAILABLE`、`TRANSIENT_NETWORK` 与 `SCHEMA_DRIFT`，再映射到核心安全错误 | 不把空结果直接解释为没有内容，也不把验证码、签名拒绝和安全限制当成网络错误重试。候选项目里的数字错误码不是平台公开稳定契约 |
 | **A4 运行索引、任务审计、Trace 与诊断** | [OpenCLI artifact](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/src/observation/artifact.ts)、[retention](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/src/observation/retention.ts)、[Playwright Trace Viewer](https://playwright.dev/docs/trace-viewer-intro) | 以 canonical `RunRecord` 保存安全计数和结果；详细 trace 仅失败时保留，附版本、状态、过期时间、容量上限和 artifact hash，并优先生成脱敏摘要 | Trace/HAR/DOM/截图/console 可能包含账号与正文，不能作为普通日志或第二份 canonical state；通用字符串脱敏无法保证清除截图和任意页面数据 |
@@ -330,6 +346,6 @@ SyncEngine
 
 ## 10. 下一步建议
 
-12 个候选仓库和非仓库 Playwright 综合专题已经全部完成。后续若继续，应另立 **Stage 4 规格研究**：先处理平台/账号授权、产品范围、威胁模型、正式 Playwright release 与浏览器制品审计，再把专题中的 profile lease、身份校验、只读 capability、receipt、停止和人工恢复要求转成可执行规格与离线验收；这不是本轮自动启动的项目。
+14 个候选仓库和非仓库 Playwright 综合专题已经全部完成。后续若继续，应另立 **Stage 4 规格研究**：先处理平台/账号授权、产品范围、威胁模型、正式 Playwright release 与浏览器制品审计，再把专题中的 profile lease、身份校验、只读 capability、receipt、停止和人工恢复要求转成可执行规格与离线验收；这不是本轮自动启动的项目。
 
 静态边界继续有效：不运行候选项目、不访问平台、不读取账号材料。任何未来真实账号动态验收都必须另行取得明确授权，并设置最小范围、硬预算、kill switch、首个限制信号停止和人工负责边界。

@@ -1,0 +1,45 @@
+{
+  "name": "xhs_web_crawler",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/leafiy/xhs_web_crawler.git",
+  "repository": "https://github.com/leafiy/xhs_web_crawler",
+  "revision": "8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50",
+  "treeRevision": "02328d0c92ca3fe31d571410201c6d2982b6349d",
+  "branch": "main",
+  "capturedAt": "2026-08-17",
+  "fixedRevisionAuthoredAt": "2025-02-06T13:34:48+08:00",
+  "fixedRevisionCommittedAt": "2025-02-06T13:34:48+08:00",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "no-tags-no-submodules-no-lfs",
+  "checkoutState": "detached-head",
+  "trackedCount": 8,
+  "staticInventory": {
+    "manifestVersion": 3,
+    "extensionVersion": "1.0",
+    "trackedExtensionFiles": 5,
+    "trackedPythonFiles": 1,
+    "trackedDependencyManifests": 0,
+    "trackedLockfiles": 0,
+    "trackedTestFiles": 0,
+    "trackedWorkflowFiles": 0,
+    "trackedLicenseFiles": 0,
+    "trackedGitmodules": 0
+  },
+  "repositoryState": {
+    "trackedDirty": false,
+    "trackedChanges": [],
+    "untrackedInspected": false
+  },
+  "licenseFiles": [],
+  "dependencyManifests": [],
+  "reviewedConfigurationFiles": [
+    "source/.gitignore",
+    "source/chrome_extension/manifest.json"
+  ],
+  "notes": [
+    "The source checkout is ignored by the workspace-wide /research/*/source/ rule.",
+    "Untracked and ignored files, including .DS_Store, were not read or removed.",
+    "No dependency installation, build, test, extension load, browser, platform request, HAR access, credential access, SAST, or SCA was performed.",
+    "The README links a LICENSE file that is absent from the tracked tree and separately states a non-commercial restriction."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "project": "xhs_web_crawler",
+  "status": "complete",
+  "phase": "complete",
+  "revision": "8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50",
+  "treeRevision": "02328d0c92ca3fe31d571410201c6d2982b6349d",
+  "updatedAt": "2026-08-17",
+  "completedAreas": [
+    "source-frozen",
+    "tracked-inventory",
+    "manifest-permission-and-entrypoint-review",
+    "popup-content-background-dataflow-review",
+    "click-scroll-state-machine-review",
+    "har-and-offline-parser-review",
+    "userscript-comparison",
+    "chrome-extension-upgrade-fit",
+    "security-privacy-license-boundary",
+    "catalog-and-navigation-update"
+  ],
+  "pendingTasks": [],
+  "openFindings": [],
+  "reviewerFindings": [
+    {
+      "review": "primary-source-research",
+      "status": "pass",
+      "openFindings": 0
+    },
+    {
+      "review": "main-agent-synthesis-and-link-check",
+      "status": "pass",
+      "openFindings": 0
+    }
+  ],
+  "blockedReason": null,
+  "nextProject": null,
+  "activationRule": "No additional project is activated by this request."
+}

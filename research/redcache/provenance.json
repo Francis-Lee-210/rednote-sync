@@ -1,0 +1,48 @@
+{
+  "name": "RedCaChe",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/ValerieTse/RedCaChe.git",
+  "repository": "https://github.com/ValerieTse/RedCaChe",
+  "revision": "b3526e66ed1d5b78e35a390edf1b7f29e1399ee9",
+  "treeRevision": "709de5bf7d62d845ed60268ac1225ceb6468f12b",
+  "branch": "main",
+  "capturedAt": "2026-08-17",
+  "fixedRevisionAuthoredAt": "2026-07-10T15:12:11-07:00",
+  "fixedRevisionCommittedAt": "2026-07-10T15:12:11-07:00",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "no-submodules-no-lfs",
+  "checkoutState": "detached-head",
+  "trackedCount": 106,
+  "staticInventory": {
+    "trackedTestFiles": 16,
+    "trackedWorkflowFiles": 1,
+    "trackedDependencyManifests": 2,
+    "trackedLockfiles": 1,
+    "trackedLicenseFiles": 1,
+    "trackedGitmodules": 0,
+    "extensionManifestVersion": 3
+  },
+  "repositoryState": {
+    "trackedDirty": false,
+    "trackedChanges": [],
+    "untrackedInspected": false
+  },
+  "licenseFiles": [
+    "source/LICENSE"
+  ],
+  "dependencyManifests": [
+    "source/backend/pyproject.toml",
+    "source/frontend/package.json",
+    "source/frontend/package-lock.json"
+  ],
+  "reviewedConfigurationFiles": [
+    "source/.github/workflows/ci.yml",
+    "source/extension/manifest.json"
+  ],
+  "notes": [
+    "The source checkout is ignored by the workspace-wide /research/*/source/ rule.",
+    "Untracked and ignored files, including .DS_Store, were not read or removed.",
+    "No dependency installation, build, test, extension load, browser, platform request, credential access, SAST, or SCA was performed.",
+    "The pure extension and the legacy server/frontend are separate implementations and do not share a data store."
+  ]
+}
