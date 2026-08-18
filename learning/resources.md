@@ -1,15 +1,17 @@
 # AI 内容分类与 LLM Wiki Resources
 
+状态：**学习资源**。本清单用于理解历史实现和候选 AI 方案，不是当前产品权威。
+
 ## Knowledge
 
 - [本地：Rednote Sync Core README](../projects/rednote-sync-core/README.md)
-  当前实现能力、支持矩阵、离线命令和阶段四边界。用于判断“现在能运行什么”。
-- [本地：阶段三实现规格](../projects/rednote-sync-core/docs/sync-core.md)
-  阶段 3A、3B、3C 的契约、测试证据和在线待验证事实。用于判断“为什么离线完成仍不等于真实账号同步”。
+  当前实现能力、支持矩阵、离线命令和历史实施 Stage 4 边界。用于判断“现在能运行什么”。
+- [本地：历史实施 Stage 3 实现规格](../projects/rednote-sync-core/docs/sync-core.md)
+  3A、3B、3C 的契约、测试证据和在线待验证事实。用于判断“为什么离线完成仍不等于真实账号同步”。
 - [本地：Obsidian 客户端逆向报告](../research/reverse/targets/rednote2obsidian/report.md)
-  当前 Obsidian 样本的接口、签名、分页、数据模型和 Markdown 规则。用于追溯阶段一结论。
+  当前 Obsidian 样本的接口、签名、分页、数据模型和 Markdown 规则。用于追溯历史实施 Stage 1 结论。
 - [本地：Notion 客户端逆向报告](../research/reverse/targets/rednote2notion/report.md)
-  当前 Notion 扩展的组件、调度、Notion 写入和凭据风险。用于追溯阶段二结论。
+  当前 Notion 扩展的组件、调度、Notion 写入和凭据风险。用于追溯历史实施 Stage 2 结论。
 
 - [Andrej Karpathy: LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
   LLM Wiki 原始构想。用于区分不可变原始材料、LLM 维护的知识层，以及后加的检索层。

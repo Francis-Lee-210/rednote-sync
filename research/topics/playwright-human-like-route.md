@@ -1,21 +1,23 @@
 # “使用 Playwright 模拟人工操作”路线专题
 
-状态：综合静态研究完成；独立复审通过  
+> 状态：**研究证据**。本文是历史实施 Stage 4 的候选路线综合，不是当前产品架构或账号政策；“模拟人工”也不是安全保证。
+
+状态：综合静态研究完成；独立复审通过
 调研日期：2026-08-13
 
 > “模拟人工”只是候选路线的历史名称，不是设计目标或安全主张。更准确的路线名称是：**基于 Playwright 的受授权、受监督、窄只读浏览器适配器**。本专题只综合已经完成并独立复审的固定源码报告与 Playwright 官方文档；不运行浏览器、不访问小红书、不读取账号材料，也不研究验证码破解、代理或账号轮换、指纹伪装、stealth、隐藏自动化或签名绕过。
 
 ## 核心结论
 
-Playwright 可以作为未来 Stage 4 的浏览器执行底座采用评估对象，但它只提供 Browser、Context、Page、网络事件、下载和诊断等通用机制；它不提供小红书的账号身份、Schema、cursor、逐资产 checkpoint、平台授权、429/验证码停止门或账号安全保证。[Playwright 专项报告](../playwright/review.md)
+Playwright 当时被列为历史实施 Stage 4 的浏览器执行底座采用评估对象，但它只提供 Browser、Context、Page、网络事件、下载和诊断等通用机制；它不提供小红书的账号身份、Schema、cursor、逐资产 checkpoint、平台授权、429/验证码停止门或账号安全保证。[Playwright 专项报告](../projects/playwright/review.md)
 
-真实浏览器、persistent profile、CDP、慢速输入、鼠标轨迹、随机延迟和 `slowMo` 都不能证明“更像人工”、降低封禁概率或满足平台许可。OpenCLI 与 MediaCrawler 中的 stealth、隐藏自动化、设备重建和限制后 fallback 只证明实现存在，不能转化为 Rednote Sync 的安全措施。[OpenCLI 专项报告](../opencli/review.md) [MediaCrawler 专项报告](../mediacrawler/review.md)
+真实浏览器、persistent profile、CDP、慢速输入、鼠标轨迹、随机延迟和 `slowMo` 都不能证明“更像人工”、降低封禁概率或满足平台许可。OpenCLI 与 MediaCrawler 中的 stealth、隐藏自动化、设备重建和限制后 fallback 只证明实现存在，不能转化为 Rednote Sync 的安全措施。[OpenCLI 专项报告](../projects/opencli/review.md) [MediaCrawler 专项报告](../projects/mediacrawler/review.md)
 
-未来若取得适用于具体账号、数据范围与用途的明确授权，生产路线应 clean-room 实现 `ProfileLease + SessionBinding + BrowserRednoteClient`：专用 profile、单账号单 owner、固定只读领域方法、精确网络 allowlist、版本化 decoder、operation generation、全局停止闸和人工显式恢复。浏览器与网络工作位于 SQLite writer transaction 之外；只有经过身份、Schema、revision、长度和 hash 校验的 DTO/receipt 才能进入 Stage 3 已有的离线 Core。
+报告当时建议：若进入后续实现，再 clean-room 评估 `ProfileLease + SessionBinding + BrowserRednoteClient`。浏览器与网络工作位于 SQLite writer transaction 之外，只有校验后的 DTO/receipt 才进入历史实施 Stage 3 的离线 Core。这是研究建议，不是当前产品已确认架构。
 
-Playwright MCP、OpenCLI 和其他通用 Agent 浏览器面只适合使用合成、脱敏、无真实账号材料的受监督探索。真实账号诊断的原始结果只能进入人类控制的本地 `ArtifactBroker`；服务端完成结构化 allowlist 与脱敏后，Agent 最多获得 schema、selector、字段存在性和 source-layer 摘要。登录或验证必须由用户直接在专用 profile 中完成；恢复期间断开或禁用 Agent/MCP 控制面，并关闭 Trace、HAR 和 session log。通用 `readOnly` 标签也不能表达本地文件写入、Secret 读取、会话写入或页面读取副作用。[Playwright MCP 专项报告](../playwright-mcp/review.md) [xiaohongshu-mcp 专项报告](../xiaohongshu-mcp/review.md)
+Playwright MCP、OpenCLI 和其他通用 Agent 浏览器面只适合使用合成、脱敏、无真实账号材料的受监督探索。真实账号诊断的原始结果只能进入人类控制的本地 `ArtifactBroker`；服务端完成结构化 allowlist 与脱敏后，Agent 最多获得 schema、selector、字段存在性和 source-layer 摘要。登录或验证必须由用户直接在专用 profile 中完成；恢复期间断开或禁用 Agent/MCP 控制面，并关闭 Trace、HAR 和 session log。通用 `readOnly` 标签也不能表达本地文件写入、Secret 读取、会话写入或页面读取副作用。[Playwright MCP 专项报告](../projects/playwright-mcp/review.md) [xiaohongshu-mcp 专项报告](../projects/xiaohongshu-mcp/review.md)
 
-最终分级：**Playwright 底层执行能力 A（Stage 4 项目级采用评估）；OpenCLI 的获取分层、租约和 unknown-outcome 模式 A（clean-room 设计参考）；Playwright MCP B（人工探索与能力边界参考）；“模拟人工可降低风控”的主张 D（无证据，排除）。**
+最终分级：**Playwright 底层执行能力 A（历史实施 Stage 4 项目级采用评估）；OpenCLI 的获取分层、租约和 unknown-outcome 模式 A（clean-room 设计参考）；Playwright MCP B（人工探索与能力边界参考）；“模拟人工可降低风控”的主张 D（无证据，排除）。**
 
 ## 1. 问题定义、授权门与证据边界
 
@@ -24,7 +26,7 @@ Playwright MCP、OpenCLI 和其他通用 Agent 浏览器面只适合使用合成
 本专题回答四个工程问题：
 
 1. Playwright 能确定提供哪些浏览器能力；
-2. 哪些能力可以进入未来 Stage 4 的窄只读 Provider；
+2. 哪些能力可以进入历史实施 Stage 4 的窄只读 Provider；
 3. 哪些能力只能用于人工监督的探索或诊断；
 4. 遇登录、验证、限流、安全限制或 Schema 漂移时，怎样可靠停止并从 Core checkpoint 恢复。
 
@@ -32,18 +34,18 @@ Playwright MCP、OpenCLI 和其他通用 Agent 浏览器面只适合使用合成
 
 ### 1.2 授权先于技术
 
-`[平台官方规则/此前核验]` 总目录已经核对 2026-03-23 更新的[小红书用户服务协议](https://agree.xiaohongshu.com/h5/terms/ZXXY20220331001/-1)：未经许可读取或统计、非法抓取、模拟下载及未授权第三方工具登录受到限制。低频、可见浏览器或“像人工”不能改变授权结论。Stage 4 立项前必须先确定平台授权、账号授权、数据用途、保存范围和停止责任；没有授权时，本专题只是一份离线威胁模型与架构研究。
+`[平台官方规则/此前核验]` 总目录已经核对 2026-03-23 更新的[小红书用户服务协议](https://agree.xiaohongshu.com/h5/terms/ZXXY20220331001/-1)：未经许可读取或统计、非法抓取、模拟下载及未授权第三方工具登录受到限制。低频、可见浏览器或“像人工”不能改变授权结论。历史实施 Stage 4 立项前必须先确定平台授权、账号授权、数据用途、保存范围和停止责任；没有授权时，本专题只是一份离线威胁模型与架构研究。
 
 ### 1.3 证据集
 
 | 来源 | 固定 revision | 本专题使用范围 |
 |---|---|---|
-| [Playwright](../playwright/review.md) | `bcb3563aa73d7ac71ac8cb877433201b1b97b7da` | Context/profile、storage state、网络、下载、Trace/HAR、生命周期 |
-| [OpenCLI](../opencli/review.md) | `a86d64705c526dc710f790e66cfcabf6ecf786b9` | 分层获取、profile/target lease、journal、unknown outcome 与高权限反例 |
-| [Playwright MCP](../playwright-mcp/review.md) | `7e0457a7cbf88823bf0146d12c46ae12c6818247` | Agent 工具、HTTP/session、本地文件、Secret 和探索/生产边界 |
-| [MediaCrawler](../mediacrawler/review.md) | `5665a271ef15e0ec82b1f48a951b66760e054db9` | CDP/profile fallback、访问限制后继续、验证码重试和宣传主张反例 |
-| [xiaohongshu-mcp](../xiaohongshu-mcp/review.md) | `da9ba0365e176bc0eb11885f1941271d895feb73` | capability 注解、side-effecting read、Cookie/会话与 Agent 写能力反例 |
-| [XHS_ALL_IN_ONE](../XHS_ALL_IN_ONE/review.md) | `63b85de2b15b3f79134b08fa675381505f45d4db` | 失败暂停行为、状态/资产反例、自动运营与写操作排除 |
+| [Playwright](../projects/playwright/review.md) | `bcb3563aa73d7ac71ac8cb877433201b1b97b7da` | Context/profile、storage state、网络、下载、Trace/HAR、生命周期 |
+| [OpenCLI](../projects/opencli/review.md) | `a86d64705c526dc710f790e66cfcabf6ecf786b9` | 分层获取、profile/target lease、journal、unknown outcome 与高权限反例 |
+| [Playwright MCP](../projects/playwright-mcp/review.md) | `7e0457a7cbf88823bf0146d12c46ae12c6818247` | Agent 工具、HTTP/session、本地文件、Secret 和探索/生产边界 |
+| [MediaCrawler](../projects/mediacrawler/review.md) | `5665a271ef15e0ec82b1f48a951b66760e054db9` | CDP/profile fallback、访问限制后继续、验证码重试和宣传主张反例 |
+| [xiaohongshu-mcp](../projects/xiaohongshu-mcp/review.md) | `da9ba0365e176bc0eb11885f1941271d895feb73` | capability 注解、side-effecting read、Cookie/会话与 Agent 写能力反例 |
+| [XHS_ALL_IN_ONE](../projects/XHS_ALL_IN_ONE/review.md) | `63b85de2b15b3f79134b08fa675381505f45d4db` | 失败暂停行为、状态/资产反例、自动运营与写操作排除 |
 
 证据强度依次为：固定源码/配置事实、官方或项目文档声明、未运行测试意图、带前提的静态推断。没有运行时证据，不证明当前平台兼容性、账号安全率或任何错误码长期稳定。
 
@@ -88,7 +90,7 @@ OpenCLI 默认注入 stealth，且所谓 isolated window 仍使用默认 Chrome 
 - 将延迟、真实浏览器、CDP 或可见窗口描述为反风控、合规或账号安全证明；
 - 无人值守的通用 Agent 浏览器控制及发布、点赞、收藏、评论、关注、删除等平台写能力。
 
-## 4. 适合 Rednote Sync 的 Stage 4 路线
+## 4. 适合 Rednote Sync 的 历史实施 Stage 4 路线
 
 ### 4.1 Exploration 与生产 Adapter 分离
 
@@ -105,7 +107,7 @@ OpenCLI 默认注入 stealth，且所谓 isolated window 仍使用默认 Chrome 
 | 状态恢复 | MCP session/profile/transcript 仅供诊断 | cursor、task、failure、checkpoint 继续由 Core 独占 |
 | Canonical 写入 | 禁止直接写入 | 只提交通过 decoder 与 revision gate 的安全 DTO/ObjectRef |
 
-Playwright MCP 固定根默认工具面包含通用导航、页面操作、网络、文件和 unsafe code 等能力；HTTP session、profile 和 `readOnly` 标记都不是生产授权边界。[Playwright MCP 专项报告](../playwright-mcp/review.md) OpenCLI 也将任意页面 JS、导航、Cookie、截图、上传与网络捕获放在同一高权限控制面。[OpenCLI 协议](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/extension/src/protocol.ts#L1-L23)
+Playwright MCP 固定根默认工具面包含通用导航、页面操作、网络、文件和 unsafe code 等能力；HTTP session、profile 和 `readOnly` 标记都不是生产授权边界。[Playwright MCP 专项报告](../projects/playwright-mcp/review.md) OpenCLI 也将任意页面 JS、导航、Cookie、截图、上传与网络捕获放在同一高权限控制面。[OpenCLI 协议](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/extension/src/protocol.ts#L1-L23)
 
 推荐 capability taxonomy 不再使用单一 `readOnly`：
 
@@ -116,7 +118,7 @@ secretRead          sessionWrite       arbitraryCode
 openNetwork         diagnosticCapture  controlStateWrite
 ```
 
-任一未显式声明和批准的维度默认拒绝。`readOnly=true` 不能证明本地无写入、Secret 未读取或页面没有副作用；xiaohongshu-mcp 的二维码工具会启动/替换登录会话并最终写 Cookie，而通知工具描述称读取会清未读，正是注解不足的反例。[xiaohongshu-mcp 专项报告](../xiaohongshu-mcp/review.md)
+任一未显式声明和批准的维度默认拒绝。`readOnly=true` 不能证明本地无写入、Secret 未读取或页面没有副作用；xiaohongshu-mcp 的二维码工具会启动/替换登录会话并最终写 Cookie，而通知工具描述称读取会清未读，正是注解不足的反例。[xiaohongshu-mcp 专项报告](../projects/xiaohongshu-mcp/review.md)
 
 生产方法必须固定到可执行 capability vector：
 
@@ -138,7 +140,7 @@ openNetwork         diagnosticCapture  controlStateWrite
   → 服务端只输出脱敏的 schema、selector、source-layer 研究结果
   ────────────────────────────── 单向隔离
 
-Stage 4 Run Controller
+历史实施 Stage 4 Run Controller
   → ProfileLease Store
   → SessionBinding / Identity Verifier
   → BrowserRednoteClient
@@ -151,7 +153,7 @@ Stage 4 Run Controller
   → Commit Gate
        → 短 BEGIN IMMEDIATE
        → expected state / manifest / session generation
-       → Stage 3 SQLite + Object Store
+       → 历史实施 Stage 3 SQLite + Object Store
 ```
 
 生产 `BrowserRednoteClient` 只应暴露：
@@ -188,7 +190,7 @@ SessionBinding(
 - profile、storage state、Cookie 和 CDP endpoint 是 Secret/session state，不是同步 checkpoint；
 - timeout、disconnect 或 crash 后的迟到结果因 generation 不匹配而拒绝提交。
 
-OpenCLI 的显式 profile/target lease、同 command ID journal 和 unknown-outcome 不盲重放值得独立实现；其 Browser Bridge、默认 profile、固定本地鉴权和通用写能力不复用。[OpenCLI 专项报告](../opencli/review.md)
+OpenCLI 的显式 profile/target lease、同 command ID journal 和 unknown-outcome 不盲重放值得独立实现；其 Browser Bridge、默认 profile、固定本地鉴权和通用写能力不复用。[OpenCLI 专项报告](../projects/opencli/review.md)
 
 ### 4.4 获取和媒体边界
 
@@ -259,7 +261,7 @@ UNKNOWN_OUTCOME
 - 优先进程内/stdio 或受控本地 IPC。网络服务如确有必要，只允许 loopback/Unix socket、强调用者身份与逐能力 token；Host 检查、CORS、固定 header 或客户端声明 roots 都不能替代认证和服务端文件授权。
 - 本地写只由 `MediaStore/ArtifactBroker` 执行固定 run root；本地读需 allowed roots、realpath/no-follow 和 OS sandbox。生产 Agent 不获得任意文件读写能力。
 
-## 7. Stage 4 验收研究
+## 7. 历史实施 Stage 4 验收研究
 
 ### 7.1 离线和本地合成验收
 
@@ -286,25 +288,25 @@ UNKNOWN_OUTCOME
 - crash、Context close、客户端断开后按期限清理租约和临时目录，checkpoint 不依赖清理成功；
 - HAR/Trace 默认关闭，Secret canary 不出现在 Agent、日志、异常、receipt、SQLite、Markdown、路径或诊断索引；
 - 浏览器/network 预取完成后，短事务使用 expected revisions 提交；并发 Core 更新导致 stale commit 被拒绝；
-- Stage 3 forbidden-network/import 静态门继续通过。
+- 历史实施 Stage 3 forbidden-network/import 静态门继续通过。
 
 ### 7.2 未来授权后的动态验收门
 
-只有在另立 Stage 4 规格、取得明确授权并完成离线门后，才能设计最小动态验收。初始运行预算应保守、有硬上限和即时 kill switch，但不得把任一页大小、QPS、延迟或成功率写成平台安全阈值。动态验收首先验证身份绑定、只读范围、停止信号、Schema 与 checkpoint，而不是验证“如何避免风控”。
+只有在另立历史实施 Stage 4 规格、取得明确授权并完成离线门后，才能设计最小动态验收。初始运行预算应保守、有硬上限和即时 kill switch，但不得把任一页大小、QPS、延迟或成功率写成平台安全阈值。动态验收首先验证身份绑定、只读范围、停止信号、Schema 与 checkpoint，而不是验证“如何避免风控”。
 
 CAPTCHA、429、登录变化、安全限制出现时应在首个信号停止；没有自动重试、换 profile、换代理、设备重建或 stealth 分支。任何真实账号成功率、验证码率和风险变化都不能从当前静态研究推导。
 
-## 8. 对阶段三和阶段四的影响
+## 8. 对历史实施 Stage 3 和历史实施 Stage 4 的影响
 
-### 8.1 Stage 3 不改变
+### 8.1 历史实施 Stage 3 不改变
 
 - 继续完全离线；不引入 Cookie、浏览器、CDP、MCP、签名、私有 endpoint 或真实平台数据；
 - Core 继续独占 canonical state、cursor、task/failure、逐资产状态和 object receipt；
 - fixture 使用合成、脱敏、确定性数据；本专题不修改代码、CLI、Schema 或公共接口。
 
-### 8.2 Stage 4 必须另立门
+### 8.2 历史实施 Stage 4 必须另立门
 
-Stage 4 需要独立的产品范围、授权记录、威胁模型、依赖/浏览器制品审计、SecretStore、本地 IPC、OS sandbox、只读 capability allowlist、会话租约、类型化停止、人工恢复和验收计划。Playwright 是否真正纳入只能在正式发布版本完成上述评估后决定。
+历史实施 Stage 4 需要独立的产品范围、授权记录、威胁模型、依赖/浏览器制品审计、SecretStore、本地 IPC、OS sandbox、只读 capability allowlist、会话租约、类型化停止、人工恢复和验收计划。Playwright 是否真正纳入只能在正式发布版本完成上述评估后决定。
 
 ## 9. 未知项、证据索引和独立复审
 
@@ -325,13 +327,13 @@ Stage 4 需要独立的产品范围、授权记录、威胁模型、依赖/浏�
 ### 9.2 证据索引
 
 - [候选项目总目录与跨项目映射](../catalog.md)
-- [Playwright 专项报告](../playwright/review.md)
-- [OpenCLI 专项报告](../opencli/review.md)
-- [Playwright MCP 专项报告](../playwright-mcp/review.md)
-- [MediaCrawler 专项报告](../mediacrawler/review.md)
-- [xiaohongshu-mcp 专项报告](../xiaohongshu-mcp/review.md)
-- [XHS_ALL_IN_ONE 专项报告](../XHS_ALL_IN_ONE/review.md)
-- [Stage 3 离线核心规格](../../projects/rednote-sync-core/docs/sync-core.md)
+- [Playwright 专项报告](../projects/playwright/review.md)
+- [OpenCLI 专项报告](../projects/opencli/review.md)
+- [Playwright MCP 专项报告](../projects/playwright-mcp/review.md)
+- [MediaCrawler 专项报告](../projects/mediacrawler/review.md)
+- [xiaohongshu-mcp 专项报告](../projects/xiaohongshu-mcp/review.md)
+- [XHS_ALL_IN_ONE 专项报告](../projects/XHS_ALL_IN_ONE/review.md)
+- [历史实施 Stage 3 离线核心规格](../../projects/rednote-sync-core/docs/sync-core.md)
 - [专题 checkpoint](playwright-human-like-route.checkpoint.json)
 
 ### 9.3 独立复审

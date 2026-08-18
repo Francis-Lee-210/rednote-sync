@@ -13,6 +13,7 @@
 
 # Third-party checkouts and reproducible reverse-engineering material
 /research/*/source/
+/research/projects/*/source/
 /research/reverse/outputs/
 /research/reverse/targets/*/samples/
 /research/reverse/targets/*/web-snapshots/

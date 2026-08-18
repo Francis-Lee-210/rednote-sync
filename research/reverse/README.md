@@ -1,5 +1,7 @@
 # Reverse engineering
 
+状态：**历史研究证据**。这里对应历史实施 Stage 1 和历史实施 Stage 2，不对应当前产品阶段一和阶段二。
+
 此目录保存 Rednote2Notion 与 Rednote2Obsidian 客户端的离线静态分析材料。
 
 - [`targets/rednote2notion/`](targets/rednote2notion/)：浏览器扩展样本、网页快照、来源记录和分析报告。

@@ -1,5 +1,9 @@
 # offline-input-v1 离线输入协议
 
+状态：**已实现契约**。本协议保持单一顶层 `account`，并要求列表、详情和 scope 使用同一账号身份；这是历史实施 Stage 3 的简化假设，不表示未来产品三条账号路线必须如此。
+
+未来需要区分关系所属、列表采集、详情采集和写回账号，但当前尚未定义字段或迁移方案，见[账号身份概念模型](../../../docs/design/account-identity-model.md)。
+
 `offline-input-v1` 是 `fixture` 和 `import-json` 共用的严格 envelope。它描述一组可按 scope + request cursor 精确重放的页面，以及显式失败重试数据。
 
 > `src/offline-input.ts` 中的 `FixtureSession` runtime decoder 是唯一权威。`schemas/offline-input-v1.schema.json` 是机器可读说明，不表达全部跨记录 provenance、Unicode 规范化、规范 URL、内容摘要和唯一性规则。

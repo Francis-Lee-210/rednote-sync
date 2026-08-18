@@ -1,10 +1,10 @@
 # 原型目录
 
-这里保存尚未进入正式项目、仍在验证用途和稳定性的代码。
+这里保存尚未进入正式项目的个人脚本和实验代码。列表导出脚本已经是成熟的个人使用基础，但尚未完成生产级端到端、全量完整性和恢复验证。
 
 ## Tampermonkey 脚本
 
-`tampermonkey/` 当前包含三个小红书列表导出原型：
+`tampermonkey/` 当前包含三个小红书列表导出脚本：
 
 - `xiaohongshu-collection-export.user.js`：收藏列表 Excel 导出。
 - `xiaohongshu-like-export.user.js`：点赞列表 Excel 导出。

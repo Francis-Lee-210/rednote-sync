@@ -1,4 +1,6 @@
-# RedNote Sync Obsidian 客户端静态逆向（阶段一）
+# RedNote Sync Obsidian 客户端静态逆向（历史实施 Stage 1）
+
+> 状态：**历史研究证据**。这里的历史实施 Stage 1 是插件逆向阶段，不是当前产品阶段一。
 
 ## 1. 结论摘要
 
@@ -462,7 +464,7 @@ Obsidian 版本至少 1.9.0 时，插件会创建 `{rootFolder}/📕 小红书.b
 - API 的实际安全速率、封禁阈值与恢复时间。**U**
 - 无 source map，原始变量名、注释、TypeScript 类型和源文件拆分无法完全恢复。**U/不可恢复**
 
-## 16. 阶段一验收清单
+## 16. 历史实施 Stage 1 验收清单
 
 - [x] 只分析指定的 `main.js`、`manifest.json`、`styles.css`。
 - [x] 未读取 `prototypes/test-cookie.txt`、`prototypes/xsec_token.txt`。

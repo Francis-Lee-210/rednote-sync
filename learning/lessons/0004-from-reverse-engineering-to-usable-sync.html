@@ -11,9 +11,10 @@
 <main>
   <div class="kicker">Lesson 0004 · 约 8 分钟</div>
   <h1>它已经造好了“发动机”，但还没接上真实账号</h1>
+  <div class="note"><strong>状态：学习材料。</strong> 本页用于解释历史研究或候选方案，不是当前产品设计；现行状态见<a href="../../docs/design/roadmap.md">产品路线图</a>。</div>
   <p class="lede">引用任务并不是半途丢失。插件分析和离线同步核心都已完成；尚未开始的是在线接入，也就是登录、签名、真实接口和你自己账号的端到端验证。</p>
 
-  <div class="note"><strong>一句话结论：</strong>标题“插件逆向-未完成”已经过时。准确状态是“阶段一至三完成，主动暂停在阶段四之前”。</div>
+  <div class="note"><strong>历史结论：</strong>插件逆向与离线 Core 已完成，即历史实施 Stage 1–3 完成；在线采集预留在历史实施 Stage 4。这套编号不对应当前三个产品功能阶段。</div>
 
   <h2>先认识四个容易混淆的词</h2>
   <table>
@@ -22,7 +23,7 @@
       <tr><td>静态逆向</td><td>不运行程序，只阅读发布包，推断它怎样工作</td><td>分析 Obsidian 与 Notion 客户端的接口、分页、签名、存储和风险</td></tr>
       <tr><td>干净重写</td><td>根据观察到的行为，重新写自己的实现</td><td>没有继续复制两个插件，而是写了独立的 Rednote Sync Core</td></tr>
       <tr><td>离线适配器</td><td>用预先准备的数据假装外部网站</td><td>用合成 fixture/import JSON 验证同步逻辑，不登录小红书</td></tr>
-      <tr><td>在线适配器</td><td>真正连接浏览器登录态和网站接口的桥</td><td>阶段四内容，目前不存在</td></tr>
+      <tr><td>在线适配器</td><td>真正连接浏览器登录态和网站接口的桥</td><td>历史实施 Stage 4 内容，目前不存在</td></tr>
     </tbody>
   </table>
 
@@ -35,19 +36,19 @@
     <div>5. 在线接入<small>尚未开始；需要新的明确授权和更保守的规格</small></div>
   </div>
 
-  <h2>阶段一至三分别完成了什么</h2>
+  <h2>历史实施 Stage 1–3 分别完成了什么</h2>
   <table>
     <thead><tr><th>阶段</th><th>完成的工作</th><th>它证明了什么</th></tr></thead>
     <tbody>
-      <tr><td>阶段一：Obsidian</td><td>恢复双域名、8 个接口、浏览器会话签名、分页、数据模型、媒体和 Markdown 规则</td><td>足以设计自己的同步核心</td></tr>
-      <tr><td>阶段二：Notion</td><td>补全浏览器扩展结构、多账号、调度、Notion 写入、凭据与日志风险</td><td>知道两种客户端路线的差异和风险</td></tr>
-      <tr><td>阶段 3A</td><td>SQLite、不可变对象、合并规则、派生视图和安全边界</td><td>数据不会轻易因中断或覆盖而损坏</td></tr>
-      <tr><td>阶段 3B</td><td>单页同步、游标、重试、暂停、状态、校验与 CLI</td><td>同步流程可在合成输入上完整运行</td></tr>
-      <tr><td>阶段 3C</td><td>崩溃恢复、离线演示、doctor、迁移、打包和安装验收</td><td>离线候选经过了完整测试和独立终审</td></tr>
+      <tr><td>历史实施 Stage 1：Obsidian</td><td>恢复双域名、8 个接口、浏览器会话签名、分页、数据模型、媒体和 Markdown 规则</td><td>足以设计自己的同步核心</td></tr>
+      <tr><td>历史实施 Stage 2：Notion</td><td>补全浏览器扩展结构、多账号、调度、Notion 写入、凭据与日志风险</td><td>知道两种客户端路线的差异和风险</td></tr>
+      <tr><td>历史实施 Stage 3A</td><td>SQLite、不可变对象、合并规则、派生视图和安全边界</td><td>数据不会轻易因中断或覆盖而损坏</td></tr>
+      <tr><td>历史实施 Stage 3B</td><td>单页同步、游标、重试、暂停、状态、校验与 CLI</td><td>同步流程可在合成输入上完整运行</td></tr>
+      <tr><td>历史实施 Stage 3C</td><td>崩溃恢复、离线演示、doctor、迁移、打包和安装验收</td><td>离线候选经过了完整测试和独立终审</td></tr>
     </tbody>
   </table>
 
-  <p>这些状态来自项目的一手材料：<a href="../../research/reverse/targets/rednote2obsidian/report.md">Obsidian 逆向报告</a>、<a href="../../research/reverse/targets/rednote2notion/report.md">Notion 逆向报告</a>、<a href="../../projects/rednote-sync-core/docs/sync-core.md">阶段三实现规格</a>和<a href="../../projects/rednote-sync-core/README.md">当前 README</a>。</p>
+  <p>这些状态来自项目的一手材料：<a href="../../research/reverse/targets/rednote2obsidian/report.md">Obsidian 逆向报告</a>、<a href="../../research/reverse/targets/rednote2notion/report.md">Notion 逆向报告</a>、<a href="../../projects/rednote-sync-core/docs/sync-core.md">历史实施 Stage 3 规格</a>和<a href="../../projects/rednote-sync-core/README.md">当前 README</a>。</p>
 
   <h2>为什么测试很多，仍然不能同步真实账号</h2>
   <p>测试使用的是完全合成的数据。它能证明“给定一页合法输入，系统会正确保存、恢复和导出”，却不能证明“小红书今天仍返回同样的字段、游标和排序”，也不能证明登录、Cookie 和页面签名在真实浏览器里能稳定工作。</p>
@@ -62,8 +63,8 @@
     <tbody>
       <tr><td>只想知道两个插件怎样工作</td><td>足够</td><td>阅读两份逆向报告的结论摘要即可</td></tr>
       <tr><td>只想验证本地数据管线</td><td>足够</td><td>在 Node 26 + macOS 运行离线演示</td></tr>
-      <tr><td>同步自己账号的收藏、点赞和帖子</td><td>不够</td><td>授权并设计阶段四，再做小样本在线验证</td></tr>
-      <tr><td>接入 AI 分类与 LLM Wiki</td><td>还差真实输入</td><td>先完成阶段四，取得稳定原始归档，再接分类派生层</td></tr>
+      <tr><td>同步自己账号的收藏、点赞和帖子</td><td>不够</td><td>当时建议设计历史实施 Stage 4；现属产品阶段二待研究</td></tr>
+      <tr><td>接入 AI 分类与 LLM Wiki</td><td>还差真实输入</td><td>AI 分类仍是候选探索，不是当前整理方案</td></tr>
       <tr><td>公开发布或商业化</td><td>远远不够</td><td>另做许可证、平台条款、跨平台、升级和长期维护评估</td></tr>
     </tbody>
   </table>
@@ -91,7 +92,7 @@
 
   <div class="decision">
     <strong>最小、最安全的下一决策</strong>
-    <p>不要直接进行全量同步。先决定是否授权阶段四；若授权，应先写在线规格，再用专用浏览器配置、自己的账号、每页不超过 5 条、一次一种请求、可随时暂停的方式验证一个极小样本。</p>
+    <p>本课当时建议先写历史实施 Stage 4 在线规格，再做极小样本验证。这只是历史教学记录；当前实验范围和账号选择需要重新讨论。</p>
   </div>
 
   <p>查看<a href="../reference/rednote-project-status.html">项目状态速查表</a>，或回到<a href="0001-ai-classification-pipeline.html">AI 分类流程</a>理解为什么“稳定原始归档”是后续分类的入口。如果任何术语仍不清楚，直接把那个词交给 agent 继续问。</p>

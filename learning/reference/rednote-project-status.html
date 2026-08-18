@@ -10,6 +10,7 @@
 <main>
   <div class="kicker">Reference · 项目状态</div>
   <h1>什么已经完成，什么还没有</h1>
+  <div class="note"><strong>状态：学习材料。</strong> 本页用于解释历史研究或候选方案，不是当前产品设计；现行状态见<a href="../../docs/design/roadmap.md">产品路线图</a>。</div>
   <p class="lede">判断标准不是任务标题，而是当前磁盘中的报告、实现规格、源码和验收记录。</p>
 
   <table>
@@ -19,7 +20,7 @@
       <tr><td>Notion 插件静态逆向</td><td>已完成</td><td>补全扩展架构、Notion 写入和隐私风险；经过修复复审</td></tr>
       <tr><td>独立离线同步核心</td><td>已完成</td><td>SQLite、不可变对象、派生视图、同步状态机和 CLI</td></tr>
       <tr><td>离线测试与本地打包</td><td>已完成</td><td>规格记录 165/165 全量测试、release 21/21 和可复现双包</td></tr>
-      <tr><td>浏览器登录与 Cookie</td><td>未开始</td><td>明确属于阶段四</td></tr>
+      <tr><td>浏览器登录与 Cookie</td><td>未开始</td><td>当时归入历史实施 Stage 4；现属产品阶段二待研究能力</td></tr>
       <tr><td>真实页面签名与 API</td><td>未开始</td><td>静态报告只能形成假设，仍需动态验证</td></tr>
       <tr><td>自己账号的端到端同步</td><td>未开始</td><td>没有用真实凭据、没有联网</td></tr>
       <tr><td>AI 分类与 LLM Wiki</td><td>设计学习中</td><td>应建立在稳定原始归档之上，作为可重跑派生层</td></tr>
@@ -30,21 +31,21 @@
   <ol>
     <li><strong>“逆向完成”不等于“真实同步完成”。</strong>前者是理解旧客户端，后者需要连接当前网站。</li>
     <li><strong>“测试全绿”不等于“在线接口有效”。</strong>当前测试验证离线数据和恢复逻辑。</li>
-    <li><strong>“未进入阶段四”不是断点丢失。</strong>这是任务明确设置的授权和账号安全边界。</li>
+    <li><strong>“未进入历史实施 Stage 4”不是断点丢失。</strong>这是当时研发路线设置的边界，不是当前产品阶段编号。</li>
   </ol>
 
-  <h2>阶段四开始前的门槛</h2>
+  <h2>历史实施 Stage 4 当时设想的门槛</h2>
   <ul>
     <li>用户明确授权使用自己的账号做最小在线验证。</li>
-    <li>先写新的阶段四规格，拆开网络预取和短数据库事务。</li>
+    <li>先写新的历史实施 Stage 4 规格，拆开网络预取和短数据库事务。</li>
     <li>使用专用浏览器配置，正常登录，不破解签名或作者授权服务。</li>
     <li>每页不超过 5 条、一次一种请求、可暂停；验证码、登录异常或疑似风控立即停止。</li>
     <li>先保存脱敏 schema 和小样本证据，再决定是否扩大范围。</li>
   </ul>
 
-  <div class="note"><strong>当前推荐：</strong>如果你的最终目标是整理自己的收藏，下一项真正有价值的工作是“阶段四最小在线验证”，不是继续扩大离线核心。</div>
+  <div class="note"><strong>历史建议：</strong>本页当时建议进入历史实施 Stage 4 的最小在线验证。现行判断是产品阶段二为最大阻碍，具体研究顺序以<a href="../../docs/design/roadmap.md">当前路线图</a>为准。</div>
 
-  <p>一手资料：<a href="../../research/reverse/targets/rednote2obsidian/report.md">Obsidian 报告</a>、<a href="../../research/reverse/targets/rednote2notion/report.md">Notion 报告</a>、<a href="../../projects/rednote-sync-core/docs/sync-core.md">阶段三规格</a>、<a href="../../projects/rednote-sync-core/README.md">README</a>。返回<a href="../lessons/0004-from-reverse-engineering-to-usable-sync.html">本课</a>。</p>
+  <p>一手资料：<a href="../../research/reverse/targets/rednote2obsidian/report.md">Obsidian 报告</a>、<a href="../../research/reverse/targets/rednote2notion/report.md">Notion 报告</a>、<a href="../../projects/rednote-sync-core/docs/sync-core.md">历史实施 Stage 3 规格</a>、<a href="../../projects/rednote-sync-core/README.md">README</a>。返回<a href="../lessons/0004-from-reverse-engineering-to-usable-sync.html">本课</a>。</p>
 </main>
 </body>
 </html>

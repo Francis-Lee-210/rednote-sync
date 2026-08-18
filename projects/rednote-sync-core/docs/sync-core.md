@@ -1,20 +1,24 @@
-# Rednote Sync Core 实现规格（阶段三）
+# Rednote Sync Core 实现规格（历史实施 Stage 3）
 
-状态：阶段三（3A、3B、3C）已完成并通过独立审查；暂停在阶段四之前  
-日期：2026-08-12  
+状态：**已实现契约**。本文中的历史实施 Stage 3 与历史实施 Stage 4 均指旧研发阶段，不对应当前三个产品功能阶段。
+
+本规格沿用插件逆向得到的单账号工作流，并在实现时把关系所属、列表采集和详情采集简化为同一个 `account`。这个限制仍是现行事实；未来多身份概念见[账号身份概念模型](../../../docs/design/account-identity-model.md)，本文不据此改变任何规范类型或行为。
+
+状态：历史实施 Stage 3（3A、3B、3C）已完成并通过独立审查；暂停在历史实施 Stage 4 之前
+日期：2026-08-12
 运行时：Node.js 26；零第三方依赖；使用内置 `node:sqlite`
 
 ## 1. 目的与规范用语
 
 本规格定义一个独立、本地优先的 TypeScript 同步核心和 CLI。它把用户主动提供的点赞、收藏、发布及收藏专辑数据转换为可重复使用的本地知识库，不复刻两个商业客户端的 UI、许可证或远端服务。
 
-“必须”“禁止”是实现和验收条件。“待动态验证”表示旧客户端静态证据不足以证明当前在线行为；阶段三不得把这些事实硬编码为已验证协议。
+“必须”“禁止”是实现和验收条件。“待动态验证”表示旧客户端静态证据不足以证明当前在线行为；历史实施 Stage 3 不得把这些事实硬编码为已验证协议。
 
-阶段三只实现离线 fixture/import adapter。浏览器登录、Cookie、页面签名和真实 API 属于阶段四，并且必须再次取得用户明确授权。
+历史实施 Stage 3 只实现离线 fixture/import adapter。浏览器登录、Cookie、页面签名和真实 API 属于历史实施 Stage 4，并且必须再次取得用户明确授权。
 
 ## 2. MVP、非目标与安全边界
 
-### 2.1 阶段三 MVP
+### 2.1 历史实施 Stage 3 MVP
 
 - Node 26 可直接运行的 TypeScript CLI；
 - 确定性 fixture adapter 和用户导出 JSON import adapter；
@@ -28,7 +32,7 @@
 
 ### 2.2 非目标
 
-阶段三禁止：
+历史实施 Stage 3 禁止：
 
 - 商业客户端的许可证、授权码、设备绑定、到期或免费额度逻辑；
 - 作者 Supabase、`notionify.net`、Notion API 或任何其他远端服务；
@@ -37,13 +41,13 @@
 - AI 分类、OCR、转写、评论全量、向量数据库或 GUI；
 - 后台无限循环、高频抓取、多目标并行；
 - 把 note ID 当作服务端 cursor；
-- 阶段三中的任何网络请求或浏览器控制。
+- 历史实施 Stage 3 中的任何网络请求或浏览器控制。
 
 ### 2.3 数据与操作边界
 
 - 只处理用户自己的点赞、收藏、发布内容或用户主动提供的导出文件。
 - 不得读取工作区根下的 `prototypes/test-cookie.txt`、`prototypes/xsec_token.txt` 或同类凭据文件；从本文档所在位置看，对应路径为 `../../../prototypes/test-cookie.txt` 和 `../../../prototypes/xsec_token.txt`。
-- 阶段三不得导入 `node:http`、`node:https`、`node:http2`、`node:net`、`node:tls`、`node:dns`，不得调用全局 `fetch`。
+- 历史实施 Stage 3 不得导入 `node:http`、`node:https`、`node:http2`、`node:net`、`node:tls`、`node:dns`，不得调用全局 `fetch`。
 - Cookie、`web_session`、`a1`、`xsec_token`、Notion Secret、AI key、授权码、Supabase key 都是 secret，不得进入 SQLite、object、派生视图、日志、异常、stdout/stderr 或路径。
 - 用户输入只读；不得复制原始导出到知识库。
 - SQLite 与通过 hash 验证的 object store 是唯一 source of truth；所有稳定人类可读文件都是可重建视图。
@@ -465,7 +469,7 @@ interface SessionAdapter {
 }
 ```
 
-handle 不可序列化、不得传给 SQLite/exporter/logger。`identify` 必须和 CLI scope 的 host/account 精确一致；不一致不自动迁移状态。阶段三只实现 fixture/import。
+handle 不可序列化、不得传给 SQLite/exporter/logger。`identify` 必须和 CLI scope 的 host/account 精确一致；不一致不自动迁移状态。历史实施 Stage 3 只实现 fixture/import。
 
 ### 6.3 RednoteClient 与 RetrySource
 
@@ -503,7 +507,7 @@ interface RetrySource {
 - 返回 page 的 scope/requestCursor 必须逐字段等于请求。
 - `nextCursor` 只能来自 fixture/response 的独立 cursor 字段。
 - RetrySource 从本轮显式 `--input` 按完整 scope+noteId 唯一查找；retry 调用 `listPage` 必须为 0，不扫描目录、不从旧日志恢复 private access。
-- endpoint、方法、字段、排序、`has_more`、cursor、token 和签名全部**待动态验证**；阶段三 client 不含在线实现。
+- endpoint、方法、字段、排序、`has_more`、cursor、token 和签名全部**待动态验证**；历史实施 Stage 3 client 不含在线实现。
 
 ### 6.4 SQLite StateStore 与 AccountStore
 
@@ -692,7 +696,7 @@ interface DerivedViewProjector {
 
 ### 7.1 启动配置
 
-数据库固定为 `state/rednote-sync.sqlite`。创建 root/state 时要求目录归当前 uid、mode 0700；新 DB mode 0600。打开前后逐级 `lstat` root/state/DB，并检查可能存在的 `-wal/-shm`，拒绝任一 symlink、非普通 DB 文件、非当前用户或 group/world writable state目录。`DatabaseSync` 不能从已 `O_NOFOLLOW` 的 fd直接构造，因此“检查后到 SQLite 打开前被同一用户并发换链”是个人本地威胁模型下明确保留的 TOCTOU 风险；阶段三不声称消除此风险。
+数据库固定为 `state/rednote-sync.sqlite`。创建 root/state 时要求目录归当前 uid、mode 0700；新 DB mode 0600。打开前后逐级 `lstat` root/state/DB，并检查可能存在的 `-wal/-shm`，拒绝任一 symlink、非普通 DB 文件、非当前用户或 group/world writable state目录。`DatabaseSync` 不能从已 `O_NOFOLLOW` 的 fd直接构造，因此“检查后到 SQLite 打开前被同一用户并发换链”是个人本地威胁模型下明确保留的 TOCTOU 风险；历史实施 Stage 3 不声称消除此风险。
 
 每个连接必须：
 
@@ -824,7 +828,7 @@ fixture/import/retry里的 SourceRank字段全部不可信。`VALIDATED_SOURCE_R
 - limit 默认 5、范围 1–10；详情、media、export并发度固定 1。
 - 默认最小运行间隔 10 分钟。fixture test可注入 clock/零间隔；未来 browser adapter不得用参数规避平台限制。
 - 每个 mutating command 从 `BEGIN IMMEDIATE` 到 COMMIT/ROLLBACK 持有单 writer transaction；第二 writer exit 8。
-- 该“client/object/projector均在长 writer transaction内”的设计只允许阶段三离线 fixture/import：engine记录安全的 elapsed/progress计数，并在每个 item/object/projector边界检查 pause。阶段四接浏览器前必须另立规格和审查门，改为事务外低频预取/下载，再用短 `BEGIN IMMEDIATE` 对 expected account/state/manifest revisions、输入 rank和已验证 object refs重新校验后提交；本规格不承诺当前长事务可直接上线。
+- 该“client/object/projector均在长 writer transaction内”的设计只允许历史实施 Stage 3 离线 fixture/import：engine记录安全的 elapsed/progress计数，并在每个 item/object/projector边界检查 pause。历史实施 Stage 4 接浏览器前必须另立规格和审查门，改为事务外低频预取/下载，再用短 `BEGIN IMMEDIATE` 对 expected account/state/manifest revisions、输入 rank和已验证 object refs重新校验后提交；本规格不承诺当前长事务可直接上线。
 
 ### 9.2 runPage 顺序
 
@@ -864,7 +868,7 @@ fixture/import/retry里的 SourceRank字段全部不可信。`VALIDATED_SOURCE_R
 6. catchup 每次仍只读一页。frontier stop 在 catchup页命中任一 note ID后，本页成功即回 head；service_end只在 hasMore=false回 head。frontier一直未命中但先到 service end也回 head。
 7. 回 head 时 cursor=null、reachedEnd=true、headFrontier=pendingHeadFrontier、stop/pending清空。任何 blocker使整个旧 progress原样保留。
 
-该算法假设列表大体新到旧、cursor链稳定；删除、置顶和排序语义全部**待动态验证**。阶段四验证失败时必须停用在线增量，不能承诺无遗漏。
+该算法假设列表大体新到旧、cursor链稳定；删除、置顶和排序语义全部**待动态验证**。历史实施 Stage 4 验证失败时必须停用在线增量，不能承诺无遗漏。
 
 ### 9.5 错误、暂停和恢复
 
@@ -908,7 +912,7 @@ rednote-knowledge/
 - projection attempt维护模块私有可逆footprint，且只记录真实磁盘变化：bytes/hash/length相同返回`unchanged`并保持mtime、不记动作；新文件记`created`；替换记`replaced`；stale file删除记`deleted`。`created`在rewind时安全删除；`replaced`先为旧derived普通文件建立同目录、随机隐藏名、当前uid、mode 0600、nofollow核验的内部backup；`deleted`用同目录安全rename到backup代替不可逆unlink。内部replacement backup可短暂hardlink到**旧derived文件**以保留原inode/mode/mtime，但绝不链接canonical object，也不是公开stable view或receipt。
 - pause rewind按动作逆序恢复：删除created、用backup恢复replaced/deleted，因此旧derived bytes、inode、mode和mtime保持。成功COMMIT后settle删除全部backup并fsync目录；COMMIT之后的remove、fsync、backup安全校验、ENOENT或observer任一失败都必须重新封装为固定、无路径的`DERIVED_VIEW`，使CLI exit9，不能向外泄漏`STATE`/`SECURITY_BOUNDARY`或内部路径，但已经COMMIT的SQLite/object与有效view不得回滚或伪报未提交。下一次account projection在任何新动作前只枚举固定合法backup目录：account root、`notes/`、`data/`、`data/notes/`、`logs/`、`.views/`和一层`assets/{noteKeyDigest}/`；不得递归未知目录。扫描必须先完整预检再删除；lstat与nofollow-open后的fstat都核对regular、当前uid、0600、nlink=1、dev+ino，未知manual目录、symlink、hardlink、跨账户或指向state/object inode一律安全失败且本轮零删除。notes/assets动态树另按当前完整期望集合清理合法namespace内未跟踪的普通派生文件，以覆盖SIGKILL发生在created undo之前的情况；不扫描或修改`state/`、`objects/`。
 - DB引用 object缺失或 hash错误是 canonical integrity error/exit 6；derived file缺失或错误只触发重建，不应报告不可恢复损坏。
-- orphan object GC不属于阶段三；不得自动删除未引用 object。
+- orphan object GC不属于历史实施 Stage 3；不得自动删除未引用 object。
 - 所有 input/output/object/derived路径从可信 root逐级 lstat ancestors，拒绝 symlink、NUL、`..`、绝对子路径、Unicode/case identity碰撞。最终输入/object用 `O_NOFOLLOW`并 fstat普通文件，核对 open前后 device/inode。
 
 ## 11. CLI 与退出码
@@ -982,7 +986,7 @@ retry：无待办/全部修复0；剩余media partial 9；detail失败5；SQLite
 - 实际package bin是无TypeScript语法的最小JS入口；它先用纯decoder检查Node major 26和darwin，失败只输出固定安全JSON并退出6，成功后才动态import含`node:sqlite`的TypeScript CLI。`doctor`无root参数，在物理系统mkdtemp内验证uid、`node:sqlite`、`O_NOFOLLOW/O_DIRECTORY`、0700/0600、目录fsync、hardlink和no-clobber能力；它必须创建真实symlink并以`O_NOFOLLOW`打开，只有明确得到`ELOOP`才通过。清理后只输出14项聚合布尔结果。
 - `.ts` 由 Node 26 type stripping直接运行；只用可擦除语法，禁止 enum/namespace/parameter property/decorator。
 - import显式 `.ts`；tsconfig `NodeNext/ESNext/allowImportingTsExtensions/verbatimModuleSyntax/erasableSyntaxOnly/noEmit/strict` 仅编辑器契约。
-- 必须明确：type stripping不执行类型检查，**不代表 TypeScript 类型安全已验证**。阶段三用 runtime schema、assertNever测试、实际 import、`node --check`和零依赖静态脚本检查 forbidden network import/fetch、第三方 import、raw ID路径、noteId→cursor cast、非穷尽分支。未运行完整 `tsc` 是review剩余风险；安装前必须用户批准。
+- 必须明确：type stripping不执行类型检查，**不代表 TypeScript 类型安全已验证**。历史实施 Stage 3 用 runtime schema、assertNever测试、实际 import、`node --check`和零依赖静态脚本检查 forbidden network import/fetch、第三方 import、raw ID路径、noteId→cursor cast、非穷尽分支。未运行完整 `tsc` 是review剩余风险；安装前必须用户批准。
 - 除 `node:sqlite` 外只用 fs/path/crypto/stream/util等内置非网络模块。
 - Node 26拒绝在`node_modules`内type-strip `.ts`，因此本地安装包只携带可复现的`dist/*.js`，不携带`src/*.ts`。零依赖build以Node内置`stripTypeScriptTypes`在临时目录重建，再用受控lexer只改写静态import、side-effect import、export-from和单一普通引号字符串dynamic import的相对`.ts` module specifier；普通字符串（包括与specifier同值者）、注释、regex和template quasi静态文字必须逐字节保持。`${...}`表达式递归扫描真实token和nested template，带上限且unterminated fail-closed；为避免自制完整JS parser产生regex/brace逃逸，表达式中除comment起始以外的任何裸`/`（regex或division）均不在安全build子集并直接拒绝。concat、conditional、variable、template参数、comment组合、多参数等dynamic import形态也直接拒绝。变换后不得残留真实相对`.ts` specifier，并须通过语义import及已提交dist逐字节/权限核对；该API的experimental状态是当前Node 26绑定的一部分，不扩展支持矩阵。
 - `files` 必须逐文件exact allowlist，只含dist运行文件、README、离线输入文档/Schema和完全合成样例；禁止glob，禁止打包 Core 项目的`src/`、`tests/`、`scripts/`、`docs/sync-core.md`、`schemas/offline-artifacts.json`、`tsconfig.json`和`.DS_Store`。工作区的原型、研究和逆向材料位于 Core 包根之外。共享release package policy同时精确固定顶层字段、private/UNLICENSED/engines/os/bin/files、空dependencies/devDependencies以及scripts全部键和值；static和pack gate都必须在任何npm命令前执行该policy，任何安装/打包/发布/version lifecycle脚本先独立拒绝，不能依赖`--ignore-scripts`提供主门禁。
@@ -994,7 +998,7 @@ fixture/import schema必须 versioned，page显式含完整 scope、requestCurso
 
 fixtures只用合成账号、正文、cursor、媒体和secret canary，不复制真实账号数据。requestCursor必须等于当前 DB progress cursor。
 
-以下全部**待动态验证**，阶段三不实现：
+以下全部**待动态验证**，历史实施 Stage 3 不实现：
 
 - XHS/RedNote web/API origins和公开 URL路径；
 - user/me、posted、collect、like、feed、board、comment endpoints及字段；
@@ -1005,7 +1009,7 @@ fixtures只用合成账号、正文、cursor、媒体和secret canary，不复�
 - 461/406/300013/-100/-101含义；
 - 安全page size、间隔、Retry-After、board分页、媒体codec。
 
-阶段四只能用专用browser profile、用户正常登录、page size≤5、一次一请求族、全程可暂停，先产脱敏schema；不实现签名破解或作者服务。
+历史实施 Stage 4 只能用专用browser profile、用户正常登录、page size≤5、一次一请求族、全程可暂停，先产脱敏schema；不实现签名破解或作者服务。
 
 ## 14. 测试矩阵
 
@@ -1082,9 +1086,9 @@ fixtures只用合成账号、正文、cursor、媒体和secret canary，不复�
 
 事件测试必须证明：`BEGIN IMMEDIATE -> immutable objects -> canonical account/state/manifest/task/failure rows -> notes/assets/index/failures outcomes -> determine finalRun -> runs outcome with overlay -> finalizeAccount(run+5 view rows+account generation/dirty) -> COMMIT`；每个object/view/DB边界异常终止后，DB只引用完整旧版或完整新版，不出现正文/媒体混合版本；失败页progress tuple逐字段与before相等；retry的listPage=0；一次sync的listPage≤1。
 
-阶段3B已审查测试覆盖上述SAVEPOINT/epoch、account replay、五projector边界、可逆replacement/delete/create/unchanged、真实第二writer及object/canonical/projection/finalize/commit SIGKILL。阶段3C-1实现测试进一步穷举每个commit后settle backup删除点，并在每一个逆序undo action完成后对真实子进程执行SIGKILL；返修测试补充固定目录/two-phase backup扫描的恶意身份矩阵，以及真实ENOENT/安全校验/SafeError到无路径CLI exit9的错误面。测试同时验证严格backup残留、未跟踪created文件、multi-note合法文件、canonical SQLite/object、unchanged元数据和后续repair。原列出的两个P3故障注入缺口已补齐并通过独立审查。该结论不构成在线验证，也不放宽阶段四审查门。
+阶段3B已审查测试覆盖上述SAVEPOINT/epoch、account replay、五projector边界、可逆replacement/delete/create/unchanged、真实第二writer及object/canonical/projection/finalize/commit SIGKILL。阶段3C-1实现测试进一步穷举每个commit后settle backup删除点，并在每一个逆序undo action完成后对真实子进程执行SIGKILL；返修测试补充固定目录/two-phase backup扫描的恶意身份矩阵，以及真实ENOENT/安全校验/SafeError到无路径CLI exit9的错误面。测试同时验证严格backup残留、未跟踪created文件、multi-note合法文件、canonical SQLite/object、unchanged元数据和后续repair。原列出的两个P3故障注入缺口已补齐并通过独立审查。该结论不构成在线验证，也不放宽历史实施 Stage 4 审查门。
 
-## 15. 阶段三实现拆分与审查门
+## 15. 历史实施 Stage 3 实现拆分与审查门
 
 ### 3A：types、安全、SQLite、objects、export
 
@@ -1138,7 +1142,7 @@ fixtures只用合成账号、正文、cursor、媒体和secret canary，不复�
 
 3C-2已实现并通过独立审查：
 
-- 根README准确限定Node 26、当前macOS/POSIX已测范围、绝对`0700` root、全祖先no-symlink、每次一页、重复调用、退出码、输出布局和Stage 4禁入；标记命令块由`/bin/zsh`逐字执行，并验证`mktemp`目录经`cd`+`pwd -P`成为canonical physical root；
+- 根README准确限定Node 26、当前macOS/POSIX已测范围、绝对`0700` root、全祖先no-symlink、每次一页、重复调用、退出码、输出布局和历史实施 Stage 4 禁入；标记命令块由`/bin/zsh`逐字执行，并验证`mktemp`目录经`cd`+`pwd -P`成为canonical physical root；
 - `offline-input-v1` exact协议文档、解释性JSON Schema和完全合成的无媒体/media/失败+retry/import-json样例；受控的离线Schema contract evaluator验证所有样例，并用反例覆盖safe-integer上限、relativePath absolute/traversal/control限制和`additionalProperties`；
 - artifact checker拥有固定text集合与前缀发现规则，在读取manifest前逐级`lstat`固定祖先/leaf并以`O_NOFOLLOW`打开；manifest路径只做严格NFC/relative/containment验证，不决定扫描范围。发现结果与manifest exact比较，门禁拒绝漏扫、symlink/外部逃逸、prototype凭据路径、JWT/credential字段和值、tokenized URL、非synthetic ID与占位符；真实临时镜像self-test覆盖正例及18个拒绝分支，并以不可读外部canary证明提前拒绝；
 - rootless只读`validate-input`复用FixtureSession decoder/provenance，输出不含path/body/ID/secret；
@@ -1150,7 +1154,7 @@ fixtures只用合成账号、正文、cursor、媒体和secret canary，不复�
 - [x] `fixture`与`import-json`均通过真实CLI验证；文档明确import-json不是通用JSON转换器。
 - [x] 合成演示覆盖Markdown、JSON、index、media、失败和retry，不以tests helper代替用户命令。
 - [x] `npm run check`（含artifact allowlist/credential门禁及临时镜像self-test）、定向测试、README逐字shell smoke、全量`npm test`与`npm run test:offline-demo`全部通过（该轮为定向24/24、全量144/144）后交独立审查。
-- [x] 独立reviewer对schema/runtime一致性、无状态验证输出、演示可复制性、mtime幂等和Stage 4边界给出PASS；修改后复审。
+- [x] 独立reviewer对schema/runtime一致性、无状态验证输出、演示可复制性、mtime幂等和历史实施 Stage 4 边界给出PASS；修改后复审。
 
 3C-3已实现并通过独立终审：
 
@@ -1158,7 +1162,7 @@ fixtures只用合成账号、正文、cursor、媒体和secret canary，不复�
 - rootless `doctor`完成系统与文件系统能力preflight，包括真实symlink的`O_NOFOLLOW`/`ELOOP`探针；不读取业务root、不联网、不输出路径/uid；
 - 显式`migrate --root`严格复用state store的exact v0→v1单事务，modified/future/current拒绝、失败rollback、第二writer exit8；不自动迁移、不创建备份；
 - static与`pack:check`在npm前复用exact package policy并拒绝所有lifecycle；`pack:check`在临时目录执行真实pack、tar内package policy复核、对所有entry先做禁止路径检查、逐文件hash inventory和同一tgz全新离线安装验收，结束删除所有临时制品；
-- README的前置警告、支持矩阵、doctor/migrate、本地pack/install、包内容与Stage 4边界均与实际命令一致，所有相对链接必须指向包内文件。
+- README的前置警告、支持矩阵、doctor/migrate、本地pack/install、包内容与历史实施 Stage 4 边界均与实际命令一致，所有相对链接必须指向包内文件。
 
 3C-3门：
 
@@ -1166,9 +1170,9 @@ fixtures只用合成账号、正文、cursor、媒体和secret canary，不复�
 - [x] doctor与migrate定向实现测试通过；busy保留exit8，unsupported runtime由纯decoder覆盖。
 - [x] 终审返修已补共享exact scripts policy与tar内package复核；postinstall/prepare/prepack三个隔离canary均在npm启动前拒绝且未写sentinel。受控specifier lexer覆盖static/side-effect/dynamic import、export-from、多行、同值ordinary literal、comment/template quasi保持、`${...}`和nested template递归及真实语义import；所有unknown dynamic import与template-expression裸slash均fail-closed。tar禁止路径对file/directory均先判定；doctor真实symlink只接受`O_NOFOLLOW`返回`ELOOP`。
 - [x] `npm run check`、`npm run test:release`（21/21）、README smoke（7 commands）、offline demo（21 commands）和全量测试（165/165）全部通过。独立终审时的发布包为35 files、80,849 bytes tgz、404,240 bytes unpacked，tgz SHA-256=`8b548468a1eabf26fe8e2016fa1a0af2457c346571d99b9696ca325efe439c1d`，inventory SHA-256=`939808dcb58804245d2d50f624501a11e793bb91b14ccea1c6925b0252665c70`；状态回填后重新执行`npm run pack:check`，仍为35 files且2份tarball逐字节一致，更新为80,895 bytes tgz、404,338 bytes unpacked，tgz SHA-256=`5c9b6924d7baa54a312ff73773f68c73cba775cfff131d5cc394ee8e46f6dea7`，inventory SHA-256=`87b937dafdddbac47c37601047254e2455ed7ffee2c9ad57ea19ca05e683f6cb`；安装后8条命令通过且临时制品全部清理。
-- [x] 独立reviewer对分发边界、tar解析、临时清理、迁移和文档给出PASS；返修后复审结论为PASS（P0/P1/P2/P3均为0）。阶段3C至此完成，但不得自动进入Stage 4。
+- [x] 独立reviewer对分发边界、tar解析、临时清理、迁移和文档给出PASS；返修后复审结论为PASS（P0/P1/P2/P3均为0）。历史实施 Stage 3C 至此完成，但不得自动进入历史实施 Stage 4。
 
-## 16. 阶段三总验收
+## 16. 历史实施 Stage 3 总验收
 
 - [x] `node:sqlite` DatabaseSync启动自检通过，零第三方依赖。
 - [x] SQLite/object store是唯一 source of truth；无 canonical JSON状态旁路。
@@ -1189,4 +1193,4 @@ fixtures只用合成账号、正文、cursor、媒体和secret canary，不复�
 - [x] 3A与3B分别通过独立审查和修复复审。
 - [x] 未联网、未读真实凭据、未实现作者服务/授权/签名破解/风控绕过。
 
-阶段三通过后仍不得自动进入阶段四。所有在线事实继续按“待动态验证”逐项、低频、用户授权验证。
+历史实施 Stage 3 通过后仍不得自动进入历史实施 Stage 4。所有在线事实继续按“待动态验证”逐项、低频、用户授权验证。

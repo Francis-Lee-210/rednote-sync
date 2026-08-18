@@ -1,4 +1,6 @@
-# Rednote2Notion 浏览器客户端静态逆向（阶段二）
+# Rednote2Notion 浏览器客户端静态逆向（历史实施 Stage 2）
+
+> 状态：**历史研究证据**。这里的历史实施 Stage 2 是插件逆向阶段，不是当前产品阶段二。
 
 ## 1. 结论摘要
 
@@ -16,7 +18,7 @@
 
 本报告只做离线静态分析。没有加载或执行任何扩展 bundle，没有发起网络请求，没有读取 `prototypes/test-cookie.txt` 或 `prototypes/xsec_token.txt`，也没有尝试绕过授权或许可证。
 
-证据等级沿用阶段一：
+证据等级沿用历史实施 Stage 1：
 
 - **D（直接证据）**：当前哈希锁定样本的 manifest、常量、可达调用点或控制流直接支持。
 - **I（推断）**：由多处直接证据组合推导，但未经运行时流量验证。
@@ -132,7 +134,7 @@ https://www.rednote.com/*
 - 三个普通同步 cursor 的手工查看/编辑；
 - Notion Secret、目标 Page 与授权码的保存。**D**
 
-sidepanel bundle 带有重复的 API/同步模块，但 MV3 后台任务和 alarm 的权威实现位于 background。重复模块在 UI 运行时是否存在额外可达业务调用，本阶段没有穷尽，按 **U** 处理；独立同步核心不应复制这种打包重复。 
+sidepanel bundle 带有重复的 API/同步模块，但 MV3 后台任务和 alarm 的权威实现位于 background。重复模块在 UI 运行时是否存在额外可达业务调用，本阶段没有穷尽，按 **U** 处理；独立同步核心不应复制这种打包重复。
 
 ### 4.4 Options 与 Popup
 
@@ -241,7 +243,7 @@ xsec_source=""
 }
 ```
 
-Notion 版没有评论 endpoint，也没有阶段一 Obsidian 版的热门评论同步。**D**
+Notion 版没有评论 endpoint，也没有历史实施 Stage 1 Obsidian 版的热门评论同步。**D**
 
 ## 7. 调度、批次和并发
 
@@ -311,7 +313,7 @@ Notion 创建中途失败时，`syncToNotion()` 会把目标 `nextPos` 写成“
 
 复合 cursor 通过 `split("_")` 取前两段，未转义；board id 或 cursor 含下划线时可能解析错误。**D/I**
 
-专辑模式完成后，下一轮走普通收藏列表。当前 Notion 版没有阶段一 Obsidian 版的 whitelist 专辑轮询与 `syncAllBookmarksAfterAlbums` 分支。**D**
+专辑模式完成后，下一轮走普通收藏列表。当前 Notion 版没有历史实施 Stage 1 Obsidian 版的 whitelist 专辑轮询与 `syncAllBookmarksAfterAlbums` 分支。**D**
 
 `getUserBoards()` 会把 STOP cause 包装成普通 `Error`；专辑页外层 catch 又吞掉 `getBoardNotes()` 和详情错误。因此专辑路径遇到 461/406/-100 时可能只记录错误而不关闭同步开关。**D**
 
@@ -492,9 +494,9 @@ category      <- AI 结果 / 专辑名 / null
 | Notion append/upload | helper 吞错，可能形成不完整但已去重页面 | D |
 | AI 失败 | 分类 fallback，不中断同步 | D |
 
-当前 Notion 版没有检查阶段一 Obsidian 版处理的 body code `300013`，也没有处理 `-101`。是否由当前服务器改为 HTTP 461/406 表达这些状态，需要动态验证。**D/U**
+当前 Notion 版没有检查历史实施 Stage 1 Obsidian 版处理的 body code `300013`，也没有处理 `-101`。是否由当前服务器改为 HTTP 461/406 表达这些状态，需要动态验证。**D/U**
 
-## 16. 与 Obsidian 阶段一的 delta
+## 16. 与 Obsidian 历史实施 Stage 1 的 delta
 
 | 维度 | Obsidian v1.2.3 | Notion v1.0.6 | 证据 |
 |---|---|---|---|
@@ -559,7 +561,7 @@ media(note_id, url, kind, status, destination_ref)
 - sidepanel 中重复业务模块是否有 background 之外的额外可达调用。**U（对独立核心不构成阻塞）**
 - 无 source map，原始 TypeScript 类型、注释和目录结构无法完整恢复。**U/不可恢复**
 
-## 19. 阶段二验收清单
+## 19. 历史实施 Stage 2 验收清单
 
 - [x] 锁定 manifest v1.0.6 与关键 bundle/rules SHA-256。
 - [x] 只做离线静态分析；未加载或执行 bundle。
@@ -574,7 +576,7 @@ media(note_id, url, kind, status, destination_ref)
 - [x] 还原 Notion 数据库发现、页面 properties、blocks、图片和视频策略。
 - [x] 还原 AI 分类必要数据流。
 - [x] 区分官方 API、用户 AI、作者 Supabase、作者 web/backend 与凭据/正文流向。
-- [x] 与阶段一 Obsidian 报告建立 D/I/U delta。
+- [x] 与历史实施 Stage 1 Obsidian 报告建立 D/I/U delta。
 - [x] 提供哈希锁定、跨平台保守 case-fold/真实路径/inode 碰撞保护、原子输出和 `node:test` 的只读提取器。
 - [ ] 未做动态协议验证；留待用户明确授权的后续阶段。
 
