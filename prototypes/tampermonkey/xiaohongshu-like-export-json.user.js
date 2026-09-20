@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小红书点赞帖子 JSON 导出工具
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  导出小红书点赞帖子列表为 JSON，不拼接帖子链接
 // @match        https://www.xiaohongshu.com/user/profile/*
 // @icon         https://www.xiaohongshu.com/favicon.ico
@@ -12,10 +12,17 @@
 (function() {
     'use strict';
 
+    const RESPONSE_EVENT_NAME = 'xhs-like-json-export-response';
     const collectedNotes = [];
     const seenNoteIds = new Set();
     let isAutoScrolling = false;
     let scrollInterval = null;
+
+    injectPageNetworkHook();
+    window.addEventListener(RESPONSE_EVENT_NAME, event => {
+        const detail = event.detail || {};
+        handleResponseText(detail.url, detail.body);
+    });
 
     function isDarkMode() {
         return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -135,6 +142,66 @@
         initThemeListener(container);
     }
 
+    function injectPageNetworkHook() {
+        try {
+            const target = document.documentElement || document.head || document.body;
+            if (!target) return;
+
+            const script = document.createElement('script');
+            script.textContent = `(() => {
+            const eventName = ${JSON.stringify(RESPONSE_EVENT_NAME)};
+            if (window.__xhsLikeJsonExportNetworkHookInstalled) return;
+            window.__xhsLikeJsonExportNetworkHookInstalled = true;
+
+            const shouldCaptureUrl = url => /api\\/sns\\/web\\//i.test(String(url || ''));
+            const getRequestUrl = input => {
+                if (typeof input === 'string') return input;
+                if (input && typeof input.url === 'string') return input.url;
+                return String(input || '');
+            };
+            const emitResponse = (url, body) => {
+                if (!shouldCaptureUrl(url) || typeof body !== 'string') return;
+                window.dispatchEvent(new CustomEvent(eventName, {
+                    detail: { url, body }
+                }));
+            };
+
+            const originalFetch = window.fetch;
+            if (typeof originalFetch === 'function') {
+                window.fetch = function(input, init) {
+                    const requestUrl = getRequestUrl(input);
+                    return originalFetch.apply(this, arguments).then(response => {
+                        try {
+                            response.clone().text().then(body => emitResponse(requestUrl, body)).catch(() => {});
+                        } catch (error) {}
+                        return response;
+                    });
+                };
+            }
+
+            const originalOpen = XMLHttpRequest.prototype.open;
+            const originalSend = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.open = function(method, url) {
+                this.__xhsLikeJsonExportRequestUrl = getRequestUrl(url);
+                return originalOpen.apply(this, arguments);
+            };
+            XMLHttpRequest.prototype.send = function() {
+                this.addEventListener('load', function() {
+                    try {
+                        emitResponse(this.__xhsLikeJsonExportRequestUrl, this.responseText);
+                    } catch (error) {}
+                });
+                return originalSend.apply(this, arguments);
+            };
+        })();`;
+
+            target.appendChild(script);
+            script.remove();
+        } catch (error) {
+            console.error('安装点赞 JSON 导出网络监听失败:', error);
+        }
+    }
+
     function getRequestUrl(input) {
         if (typeof input === 'string') return input;
         if (input && typeof input.url === 'string') return input.url;
@@ -145,32 +212,28 @@
         return Boolean(data && data.success === true && data.data && Array.isArray(data.data.notes));
     }
 
-    function isLikeTabPage() {
-        const params = new URLSearchParams(window.location.search);
-        const tab = (params.get('tab') || '').toLowerCase();
-        const subTab = (params.get('subTab') || '').toLowerCase();
-        return tab.includes('like') || subTab.includes('like') || tab.includes('liked') || subTab.includes('liked');
-    }
-
-    function shouldProcessResponse(url, data) {
-        if (!hasNotesPayload(data)) return false;
-
-        const requestUrl = String(url);
-        const isLikeEndpoint = /api\/sns\/web\/v\d+\/note\/(?:like|liked)\/page/i.test(requestUrl);
-        if (isLikeEndpoint) return true;
-
-        const isPossibleNoteList = /api\/sns\/web\//i.test(requestUrl);
-        const hasLikedField = data.data.notes.some(note => (
-            note && note.interact_info && Object.prototype.hasOwnProperty.call(note.interact_info, 'liked')
-        ));
-
-        return isLikeTabPage() && isPossibleNoteList && hasLikedField;
-    }
-
     function shouldInspectUrl(url) {
-        const requestUrl = String(url);
-        return /api\/sns\/web\/v\d+\/note\/(?:like|liked)\/page/i.test(requestUrl)
-            || (isLikeTabPage() && /api\/sns\/web\//i.test(requestUrl));
+        try {
+            const { pathname } = new URL(url, window.location.href);
+            // The request identifies the list; a later tab switch or a note's
+            // viewer-specific liked flag cannot establish list membership.
+            return /^\/api\/sns\/web\/v\d+\/note\/(?:like|liked)\/page$/i.test(pathname);
+        } catch {
+            return false;
+        }
+    }
+
+    function handleResponseText(url, responseText) {
+        if (!shouldInspectUrl(url) || typeof responseText !== 'string') return;
+
+        try {
+            const data = JSON.parse(responseText);
+            if (hasNotesPayload(data)) {
+                processNotes(data.data.notes);
+            }
+        } catch (error) {
+            console.error('解析点赞 JSON 响应数据失败:', error);
+        }
     }
 
     function interceptXHR() {
@@ -182,14 +245,7 @@
             }
 
             this.addEventListener('load', function() {
-                try {
-                    const data = JSON.parse(this.responseText);
-                    if (shouldProcessResponse(requestUrl, data)) {
-                        processNotes(data.data.notes);
-                    }
-                } catch (error) {
-                    console.error('解析点赞响应数据失败:', error);
-                }
+                handleResponseText(requestUrl, this.responseText);
             });
             return originalOpen.apply(this, arguments);
         };
@@ -205,7 +261,7 @@
             }
 
             response.clone().json().then(data => {
-                if (shouldProcessResponse(requestUrl, data)) {
+                if (hasNotesPayload(data)) {
                     processNotes(data.data.notes);
                 }
             }).catch(() => {
@@ -226,8 +282,8 @@
 
     function processNotes(notes) {
         notes.forEach(note => {
-            const noteId = readValue(note.note_id);
-            if (seenNoteIds.has(noteId)) return;
+            const noteId = typeof note?.note_id === 'string' ? note.note_id.trim() : '';
+            if (!noteId || seenNoteIds.has(noteId)) return;
 
             seenNoteIds.add(noteId);
             collectedNotes.push({
@@ -397,6 +453,7 @@
 
     function init() {
         createUI();
+        updateCounter();
     }
 
     interceptXHR();

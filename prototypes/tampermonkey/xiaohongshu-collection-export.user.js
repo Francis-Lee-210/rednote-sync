@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小红书收藏夹导出工具
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  自动导出小红书收藏夹内容为Excel格式
 // @match        https://www.xiaohongshu.com/user/profile/*
 // @icon         https://www.xiaohongshu.com/favicon.ico
@@ -165,8 +165,8 @@
     let isAutoScrolling = false;
     let scrollInterval;
 
-    function toggleAutoScroll() {
-        const scrollButton = document.querySelector('.xhs-button:last-child');
+    function toggleAutoScroll(event) {
+        const scrollButton = event.currentTarget;
         if (isAutoScrolling) {
             stopAutoScroll();
             scrollButton.textContent = '自动滚动获取';
@@ -233,18 +233,21 @@
     function processNotes(notes) {
         const counter = document.getElementById('note-counter');
         notes.forEach(note => {
+            const noteId = typeof note?.note_id === 'string' ? note.note_id.trim() : '';
+            if (!noteId) return;
+
             const processedNote = {
-                note_id: note.note_id || 'Unknown',
+                note_id: noteId,
                 xsec_token: note.xsec_token || 'Unknown',
                 display_title: note.display_title || 'Unknown',
                 user_id: note.user?.user_id || 'Unknown',
                 nickname: note.user?.nickname || 'Unknown',
                 avatar: note.user?.avatar || 'Unknown',
-                liked_count: note.interact_info?.liked_count || 'Unknown',
+                liked_count: note.interact_info?.liked_count ?? 'Unknown',
                 liked: note.interact_info?.liked === true ? '是' : note.interact_info?.liked === false ? '否' : 'Unknown',
                 cover_url_pre: note.cover?.url_pre || 'Unknown',
                 cover_url_default: note.cover?.url_default || 'Unknown',
-                request_url: `https://www.xiaohongshu.com/explore/${note.note_id}?xsec_token=${note.xsec_token}&xsec_source=pc_user`
+                request_url: `https://www.xiaohongshu.com/explore/${noteId}?xsec_token=${note.xsec_token}&xsec_source=pc_user`
             };
             // 避免重复添加
             if (!collectedNotes.some(n => n.note_id === processedNote.note_id)) {
