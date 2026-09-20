@@ -1,0 +1,6 @@
+-r requirements.txt
+# Import-only SDK dependencies; platform traffic uses the bounded HTTPX bridge.
+requests==2.34.2
+lxml==6.1.3
+charset-normalizer==3.5.1
+urllib3==2.7.0

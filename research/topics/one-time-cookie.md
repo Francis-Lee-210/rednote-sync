@@ -16,7 +16,7 @@
 
 ## 2. 证据等级
 
-沿用 `research/catalog.md` 与 `research/topics/xsec-link-structure.md`：
+沿用[研究目录](../catalog.md)与 [xsec 链接结构](xsec-link-structure.md)；原目录中的详细定义见[固定版本比较 §2](reference-project-comparison.md#evidence-and-ratings)：
 
 - `[外部声明]`：README、博客、Issue 或其他人的描述。
 - `[静态证据]`：仓库中固定 revision 的源码、配置或离线样本能直接确认的行为。
@@ -158,8 +158,8 @@
 
 ⚠️ 冲突与风险提示（仓库事实）：
 
-- C6 与 `xsec-link-structure.md` §6.1 硬停止条件、`HANDOFF.md` 安全边界冲突；"尝试风控机制"的具体做法（签名/指纹/代理等）目前未定义，其中部分做法落在 `catalog.md` 5.8 的 D 级排除面上（stealth、指纹伪装、签名绕过）。
-- E2 与 `sync-core.md` §2.2（禁止签名算法破解、`xsec_token` 生成或转换）及 `catalog.md` 5.8 冲突。
+- C6 与 `xsec-link-structure.md` §6.1 硬停止条件、`HANDOFF.md` 安全边界冲突；"尝试风控机制"的具体做法（签名/指纹/代理等）当时未定义，其中部分做法落在[固定版本比较 §5.8](reference-project-comparison.md#playwright-human-like) 的 D 级排除面上（stealth、指纹伪装、签名绕过）。
+- E2 与 `sync-core.md` §2.2（禁止签名算法破解、`xsec_token` 生成或转换）及[固定版本比较 §5.8](reference-project-comparison.md#playwright-human-like) 冲突。
 - 上述内容只保留为当时的候选实验决定；账号形式和硬停止规则已经交由当前产品设计重新定义，本文不替代产品权威。
 - 当次实验继续不使用主账号，E-C 与旧 token 直连保持冻结；这不表示主账号永远不能参与正常在线采集。离线边界（历史实施 Stage 3 、`offline-input-v1`、安全清单五字段）不受影响。
 
@@ -184,5 +184,5 @@
 ## 11. 相关文档
 
 - `research/topics/xsec-link-structure.md`（2026-08-16 第二次会话增补：三条情报核验 + Cookie 路线决定摘要）
-- `research/catalog.md`（候选项目审查结论；5.8 stealth/指纹伪装/签名绕过 D 级排除面）
-- `projects/rednote-sync-core/docs/sync-core.md`（§2.2 历史实施 Stage 3 禁止项；§6.2 SessionAdapter；§9.1 历史实施 Stage 4 门）
+- [研究目录](../catalog.md)（候选项目审查与专题入口）；[固定版本比较 §5.8](reference-project-comparison.md#playwright-human-like)（stealth/指纹伪装/签名绕过 D 级排除面，原目录 §5.8）。
+- [Core 重构前规格快照](../../projects/docs/history/sync-core-before-2026-09-12.md)（§2.2 历史实施 Stage 3 禁止项；§6.2 SessionAdapter；§9.1 历史实施 Stage 4 门；仅支持当时研究背景，非现行契约）

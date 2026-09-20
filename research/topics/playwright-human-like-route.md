@@ -326,14 +326,15 @@ CAPTCHA、429、登录变化、安全限制出现时应在首个信号停止；�
 
 ### 9.2 证据索引
 
-- [候选项目总目录与跨项目映射](../catalog.md)
+- [候选项目研究目录](../catalog.md)
+- [固定版本比较与跨项目映射](reference-project-comparison.md#design-comparison)
 - [Playwright 专项报告](../projects/playwright/review.md)
 - [OpenCLI 专项报告](../projects/opencli/review.md)
 - [Playwright MCP 专项报告](../projects/playwright-mcp/review.md)
 - [MediaCrawler 专项报告](../projects/mediacrawler/review.md)
 - [xiaohongshu-mcp 专项报告](../projects/xiaohongshu-mcp/review.md)
 - [XHS_ALL_IN_ONE 专项报告](../projects/XHS_ALL_IN_ONE/review.md)
-- [历史实施 Stage 3 离线核心规格](../../projects/rednote-sync-core/docs/sync-core.md)
+- [历史实施 Stage 3 离线核心规格](../../projects/docs/sync-core.md)
 - [专题 checkpoint](playwright-human-like-route.checkpoint.json)
 
 ### 9.3 独立复审

@@ -1,6 +1,38 @@
 # Playwright 专项源码审查
 
+GitHub：[microsoft/playwright](https://github.com/microsoft/playwright)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下依据固定版本 `bcb3563aa73d7ac71ac8cb877433201b1b97b7da` 的公开文档与源码作静态分析，未启动浏览器，未实测小红书兼容性。
+
+**Playwright 是让脚本控制浏览器和网页的通用工具。** 下面介绍它能提供的机制；小红书的登录步骤、帖子选择和数据判断仍需另外编写。
+
+### 身份验证方式：提供会话保存与恢复能力，登录和账号核验由调用方实现
+
+可以把浏览器会话理解成一套网页访问环境，里面保存着 Cookie 等状态。Playwright 提供几种使用方式：
+
+| 方式 | 工具实际提供什么 |
+|---|---|
+| 保存和恢复会话材料 | 调用方先安排登录，再用 `storageState` 保存 Cookie、localStorage 等，后续创建浏览器会话时载入。IndexedDB 需要显式选择保存；这不是复制整个浏览器环境。[保存与载入示例](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/auth.md#L268-L302)、[实际收集范围](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/packages/playwright-core/src/server/browserContext.ts#L616-L640) |
+| 使用专用持久目录 | `launchPersistentContext(userDataDir)` 启动浏览器，把会话保存在指定目录，下次沿用该目录。官方要求为自动化使用独立目录，不支持把日常 Chrome 主目录直接交给这个方法。[持久目录说明](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/api/class-browsertype.md#L329-L351) |
+| 连接已有浏览器 | `connectOverCDP` 可连接已经提供调试端点的 Chromium 类浏览器，使用其中已有的会话和页面。它需要可连接的调试地址，不能无条件接管任意已打开的 Chrome。[CDP 连接条件与示例](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/api/class-browsertype.md#L140-L178) |
+
+**恢复材料不等于验证账号。** 先开有窗口的浏览器、让用户手动登录，再保存会话，是调用方可以组织的流程；Playwright 不会因此自动知道“小红书登录成功了”“登录的是指定账号”或“Cookie 仍有效”。官方认证示例也要求应用自己完成登录动作、等待成功页面或元素，再保存状态；小红书具体用什么成功判据，需要另行实现。[认证步骤示例](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/auth.md#L59-L75)
+
+### 帖子详情获取方式：可读取页面、网络响应或 HTTP 结果，采集流程由调用方编写
+
+| 取数据的路线 | Playwright 能做什么 | 需要自行补齐什么 |
+|---|---|---|
+| 让网页正常加载，再读页面 | 导航或点击进入帖子，用页面脚本读取标题、正文等元素，也可读取页面保存在 `window` 中的数据。[页面操作](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/pages.md#L6-L24)、[页面脚本](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/evaluating.md#L6-L16) | 小红书页面选择器、数据位置、加载完成和帖子 ID 的核对。 |
+| 让网页正常加载，再读网络响应 | 在导航或点击之前监听目标响应，收到后直接用 `response.json()` 读取 JSON，无须先导出 HAR。[等待响应](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/network.md#L307-L334)、[响应 JSON](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/api/class-response.md#L91-L98) | 哪个响应是目标帖详情、返回是否成功、字段是否合法，以及如何保存结果。 |
+| 直接发送 HTTP 请求 | `page.request`／`context.request` 可以共用浏览器 Cookie；也能用 `request.newContext()` 创建独立 HTTP 客户端，后者不需要浏览器进程。[Cookie 共享与独立请求](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/api/class-apirequestcontext.md#L7-L25)、[独立客户端示例](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/api/class-apirequestcontext.md#L36-L46) | 接口地址、参数、平台认证和签名要求。共享 Cookie 不代表执行了网页 JavaScript 或满足了接口全部要求。 |
+
+**目标帖子由调用脚本决定。** 例如，脚本可以接收一份帖子链接清单，依次导航并读取详情；也可以先从搜索或收藏页面收集链接，再处理这些链接。这样的列表发现、分页、逐帖循环、去重和结果保存是要编写的应用逻辑，通用导航与点击 API 不会自动替你收齐当前页面的所有帖子。[导航与点击能力](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/pages.md#L6-L24)
+
+**使用浏览器路线时，不必先手动打开日常 Chrome。** 脚本可自行启动浏览器；普通启动默认 `headless=true`，即没有可见窗口，但浏览器进程仍在运行，需要人工登录时可选择有窗口模式。使用纯 HTTP 客户端则是另一条路线。上述通用 API 都不代算小红书签名或创造 `xsec_token`；这些访问材料及其有效性必须由具体应用解决，不能由“能带 Cookie 发请求”推定帖子一定可读。[启动浏览器](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/docs/src/api/class-browsertype.md#L256-L281)、[无头模式默认值](https://github.com/microsoft/playwright/blob/bcb3563aa73d7ac71ac8cb877433201b1b97b7da/packages/playwright-core/src/server/browserType.ts#L299-L307)
 
 状态：专项审查完成；独立复审通过
 审查日期：2026-08-13

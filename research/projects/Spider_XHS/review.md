@@ -1,6 +1,32 @@
 # Spider_XHS 专项源码审查
 
+GitHub：[cv-cat/Spider_XHS](https://github.com/cv-cat/Spider_XHS)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下基于固定版本 `2030f5d4454e556ad7a9caa83b3ec532d4df20c7` 的公开源码静态分析；未运行项目，未实测当前小红书兼容性。
+
+本节聚焦普通网页版的 `spider/spider.py` 采集链。根目录 `main.py` 是另一组登录演示，默认选择创作者中心扫码后列出已发布作品，切到 PC 才读取指定单帖。[两个演示分支](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/main.py#L20-L79)
+
+### 身份验证方式：提供完整 Cookie，或通过接口扫码／短信登录
+
+批量脚本默认读取用户提供的完整 Cookie，可以理解为“已经登录的会话凭证”：配置来自 `.env`／`COOKIES` 环境变量，再交给 Auth 对象管理。它不会自动从已打开的浏览器取 Cookie。另可选择二维码或手机验证码入口；这两条路线用 HTTP 请求完成登录，用户仍需在手机 App 确认扫码，或输入手机号及短信验证码。[配置读取](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/xhs_utils/common_util.py#L13-L30) [三种入口](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/spider/spider.py#L113-L132) [二维码工厂](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/xhs_utils/xhs_pc/auth.py#L428-L469) [短信流程](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/apis/xhs_pc_login_apis.py#L845-L880)
+
+“有 Auth 对象”和“确认登录”分两步：前者初步检查 `a1/web_session` 等字段；随后 `bootstrap()` 请求当前用户资料，要求响应成功且用户 ID 非空，但不拒绝访客，也不比对用户预先指定的账号。扫码、短信流程另外要求用户资料查询成功且 `guest=false`，才返回 Cookie。[字段检查](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/xhs_utils/xhs_pc/auth.py#L263-L276) [用户资料检查](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/apis/xhs_pc_apis.py#L72-L81) [扫码验收](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/apis/xhs_pc_login_apis.py#L834-L843) [短信验收](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/apis/xhs_pc_login_apis.py#L871-L880)
+
+请求签名由项目的 Python 组件调用 Node.js 中的 JavaScript 准备；Node.js 是脚本运行时，不是浏览器，生成签名也不等于证明账号登录有效。[请求组装](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/apis/xhs_pc_apis.py#L119-L133) [签名调用](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/xhs_utils/xhs_pc/params.py#L180-L197) [Node 子进程](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/xhs_utils/xhs_pc/runtime.py#L108-L117)
+
+### 帖子详情获取方式：脚本逐条请求详情 API，直接读取 JSON
+
+帖子范围由调用方指定。现成批量包装支持“帖子链接清单”“某个用户的发布列表”“关键词及数量／筛选条件”；后两者先请求列表，再逐条获取详情。底层还有喜欢、收藏列表 API，但这两类没有对应的现成批量导出包装。[清单循环](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/spider/spider.py#L28-L52) [用户与搜索](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/spider/spider.py#L54-L103) [喜欢列表](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/apis/xhs_pc_apis.py#L380-L409) [收藏列表](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/apis/xhs_pc_apis.py#L439-L468)
+
+`get_note_info()` 从网址取帖子 ID、`xsec_token` 和 `xsec_source`，向 `/api/sns/web/v1/feed` 发 HTTP POST，读取响应 JSON。缺 token 时发送空字符串，缺 source 时使用 `pc_search`；这不证明无 token 也能访问。该方法失败后返回错误，没有下载 HTML 的备用解析分支。[详情方法](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/apis/xhs_pc_apis.py#L470-L503)
+
+因此，采集阶段可以由后台 Python＋Node.js 脚本执行，不需要先打开浏览器、逐篇点击或导出 HAR。名为 `BrowserHttpClient` 的组件实际使用 `curl_cffi` 发请求，并不启动浏览器；图片、视频另用 HTTP 下载，按选择保存媒体或 Excel。[HTTP 实现](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/xhs_utils/xhs_core/http.py#L79-L100) [下载](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/xhs_utils/data_util.py#L210-L228) [输出选择](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/spider/spider.py#L28-L52)
+
+有两处会影响结果理解：列表包装重建链接时保留 ID、token，却丢掉 source；单帖包装直接取响应第一条，不比对请求 ID。另外，“全部发布”循环可能在追加当前页前退出，不能保证收齐所有帖子。[链接重建](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/spider/spider.py#L54-L98) [首条读取](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/spider/spider.py#L14-L26) [分页停止](https://github.com/cv-cat/Spider_XHS/blob/2030f5d4454e556ad7a9caa83b3ec532d4df20c7/apis/xhs_pc_apis.py#L335-L346)
 
 状态：专项静态审查完成；独立复审通过
 审查日期：2026-08-13
@@ -158,7 +184,7 @@ Creator 调用方
 
 ### 10.3 阶段边界
 
-- **历史实施 Stage 3：保持完全离线。** 继续遵循 [`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md)；本仓库及其HTTP、Cookie、签名、Node、代理和下载不进入Core。
+- **历史实施 Stage 3：保持完全离线。** 继续遵循 [`sync-core.md`](../../../projects/docs/sync-core.md)；本仓库及其HTTP、Cookie、签名、Node、代理和下载不进入Core。
 - **历史实施 Stage 4：另立授权与验收门。** 所有endpoint、token/source、cursor、身份和媒体字段需在明确授权下低频、脱敏验证；这仍不构成平台许可或账号安全证明。
 
 ## 11. 采用分级、未知项和独立复审

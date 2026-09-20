@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "project": "xhs-cli-headless",
+  "status": "complete",
+  "phase": "static-research-complete",
+  "revision": "ffb70f4a9a5a137ef70b7cf14b770b75bb3d8589",
+  "treeRevision": "4889be175225fd5458e9d78db0983268b90bb5be",
+  "updatedAt": "2026-09-13",
+  "completedAreas": [
+    "upstream-package-and-repository-identity",
+    "clone-frozen-at-detached-head-and-ignored",
+    "tracked-inventory-and-python-ast-parse",
+    "cookie-import-http-qr-and-optional-browser-login-boundaries",
+    "identity-checks-storage-and-diagnostic-output-review",
+    "detail-api-html-search-and-media-boundaries",
+    "fixed-revision-exporter-command-json-and-access-context-comparison",
+    "cache-progress-and-core-responsibility-mapping",
+    "dependency-license-and-test-configuration-review",
+    "beginner-two-axis-introduction-and-report-synthesis",
+    "independent-auth-and-detail-review-with-corrections",
+    "catalog-and-related-exporter-review-follow-up",
+    "local-links-source-citations-json-ignore-and-working-tree-verification"
+  ],
+  "pendingTasks": [],
+  "researchAssessment": {
+    "rating": "B",
+    "meaning": "Local component and design reference; not a complete exporter or an approved product integration"
+  },
+  "openFindings": [
+    "Default registered CLI omits favorites and likes; the studied exporter also expects unsupported streaming flags and NDJSON.",
+    "read with bare ID plus explicit token can overwrite a cached pc_search source with pc_feed; live impact remains untested.",
+    "Desktop HTML parsing can fall back to a different note while wrapping the requested outer ID.",
+    "Saved-session import and diagnostics do not enforce the user's expected stable account ID.",
+    "Some diagnostic fingerprints, QR logs and failure messages retain session material; ordinary Set-Cookie updates are process-local.",
+    "Cookie, access-token and search-session caches are not durable per-post export progress or media receipts.",
+    "Current platform compatibility, completeness and long-term stability were not tested."
+  ],
+  "verification": {
+    "markdownFilesChecked": 4,
+    "localLinksChecked": 97,
+    "localAnchorsChecked": 32,
+    "headlessSourceCitationOccurrencesChecked": 63,
+    "uniqueHeadlessSourceCitationsChecked": 62,
+    "sourceCitationCheckScope": "Fixed revision, tracked file existence and line bounds; core auth/detail/compatibility claims also reviewed against source",
+    "projectMetadataJsonFilesParsed": 32,
+    "previousMetadataFilesUnchanged": 30,
+    "upstreamTrackedFilesHashUnchanged": 75,
+    "pythonFilesAstParsed": 47,
+    "pythonAstErrors": 0,
+    "tomlFilesParsed": ["pyproject.toml", "uv.lock"],
+    "independentReviews": ["upstream-identity-and-auth", "detail-and-exporter-contract"],
+    "reviewCorrectionsApplied": [
+      "auth inspect fingerprints contain partial original Cookie characters",
+      "session propagation is a source comment, not a verified condition or user-facing notice"
+    ],
+    "sourceCleanAndDetached": true,
+    "sourceIgnoredByGit": true,
+    "researchArtifactsNotIgnored": true,
+    "gitDiffCheckPassed": true,
+    "preexistingWorkingTreeStatusEntriesPreserved": 133,
+    "unexpectedWorkingTreeStatusChanges": 0,
+    "upstreamTestsRun": false,
+    "packageInstalled": false,
+    "platformRequestsMade": false,
+    "userCredentialsRead": false
+  },
+  "productAdoptionApproved": false,
+  "upstreamCodeModified": false,
+  "upstreamCodeExecuted": false,
+  "onlineCompatibilityVerified": false,
+  "blockedReason": null,
+  "activationRule": "This static study does not start login, collection, upstream tests or a Rednote online experiment."
+}

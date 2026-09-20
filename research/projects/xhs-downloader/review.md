@@ -1,6 +1,71 @@
 # XHS-Downloader 专项源码审查
 
+GitHub：[JoeanAmier/XHS-Downloader](https://github.com/JoeanAmier/XHS-Downloader)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 2026-09-14 实测补充：完整链接、不使用 Cookie，下载成功
+
+**仅凭包含有效 `xsec_token` 和 `xsec_source=pc_feed` 的完整帖子链接，成功取得详情并下载图片；本次不需要 Cookie。** 样本仍为帖子 `6a9e62d2000000002902c012`。网页和媒体请求均已检查没有 `Cookie` 或 `Authorization` 请求头，没有读取账号配置或启动浏览器，也没有使用响应写入的 Cookie。
+
+| 环节 | 本次结果 |
+| --- | --- |
+| 网页与帖子详情 | 一次 GET 返回 HTTP 200；固定版本 `Converter` 成功解析 HTML，返回帖子 ID 与目标一致，取得标题、正文及 1 张图片地址。 |
+| 图片下载 | 固定版本 `Image` 生成 JPEG 地址，`Download` 完成一次媒体 GET；HTTP 206，完整的 `bytes=0-` 响应，不是接续旧文件。 |
+| 文件验证 | 保存 1 张 JPEG，1179 × 1548，97,041 字节；响应长度和 Content-Range 总长度与文件一致，传输与落盘 SHA-256 相同，Pillow 校验及完整解码通过。 |
+| 保存结果 | `note.md`、`details.json` 和图片已保存；结果为 `COMPLETE_COOKIE_FREE_LINK_DOWNLOAD`。 |
+
+测试时间为 2026-09-14 15:28–15:34 NZST。使用固定 revision `56c912e0df7920ad0fbf5cd9d911628587b9c7e6` 的真实解析、字段提取和下载组件，由隔离调用器提供无 Cookie 的 HTTP 客户端；未运行完整 CLI，也未读取原有 `Volume`。共请求网页和图片各一次，启用 TLS 验证，关闭代理、自动重试和自动重定向。该样本是单图帖子，本轮没有视频下载测试。
+
+本次证明：**这个完整链接可以在不提供 Cookie 的情况下完成详情与图片下载。** 与下方“带 Cookie、无 token 链接失败”的记录一起保留。
+
+产物和脱敏报告位于被 Git 忽略的 `research/reverse/targets/xhs-xsec-token/experiment/data/xhs-downloader-runs/anonymous_20260914T152828_full_link/`；报告为 `report.json`，图片为 `media/6a9e62d2000000002902c012_1.jpeg`。本文不记录 token 值或完整访问链接。
+
+## 2026-09-14 实测补充：小号 Cookie + 无 token 链接
+
+**这次小号身份核验通过，但第一条无 `xsec_token` 链接没有取得帖子详情。** 测试对象是此前批准的公开实验帖“没人跟我说短信换背景图双方都能看见啊”，帖子 ID 为 `6a9e62d2000000002902c012`；使用本地登记为 G（`test_g`）的“小号”Cookie。测试时间为 2026-09-14 15:02–15:06 NZST。
+
+| 环节 | 本次结果 |
+| --- | --- |
+| 身份验证 | `GET /api/sns/web/v2/user/me` 返回 HTTP 200、业务码 0；非游客身份成立，账号摘要与已有绑定一致。 |
+| 无 token 的 `/explore/` 链接 | 请求 `https://www.xiaohongshu.com/explore/6a9e62d2000000002902c012`，返回 HTTP 302；跳转地址是同站 `/404/…` 错误页，带 `error_code=300031`。没有跟随跳转，没有取得帖子详情。 |
+| 无 token 的 `/discovery/item/` 链接 | 第一条已指向错误页，因此停止后续请求，这条链接未测试。 |
+| 详情解析与媒体下载 | 未进入真实帖子解析或媒体下载，下载文件数为 0。 |
+
+本次采用**受控 HTTP 请求 + 固定版本解析器的实验调用方式**，不是原版 CLI 的完整运行。沿用固定 revision `56c912e0df7920ad0fbf5cd9d911628587b9c7e6` 的网页请求头和 `Converter`；实际联网前，原版解析器的两个合成样本检查，以及 HTTP 风险状态、重定向、缺少详情状态的三个离线检查通过。在线请求启用 TLS 验证、关闭环境代理、自动重试和自动重定向；Cookie 仅在内存中传递，不合并响应的 `Set-Cookie`。身份请求和网页请求各一次，没有搜索，也没有复用历史 token。由于网页请求在 HTTP 302 处停止，解析器尚未处理这篇帖子的真实 HTML。
+
+**可得出的结论：在这次账号、时间和请求条件下，该帖的无 token `/explore/` 链接没有成功。** 不能据此推断 Cookie 已失效、帖子已被删除，或所有帖子都必须携带 `xsec_token`；本轮未测试另一种链接形式，也未运行原版 CLI 的完整流程。后文的固定版本静态审查结论继续保留。
+
+脱敏报告位于被 Git 忽略的实验目录：身份报告 `research/reverse/targets/xhs-xsec-token/experiment/data/protocol-runs/test_g_20260914T150206_daa87cc1.json`，网页报告 `research/reverse/targets/xhs-xsec-token/experiment/data/xhs-downloader-runs/test_g_20260914T150625_no_token/report.json`。本次记录不包含 Cookie、用户 ID、完整错误页跳转地址或响应正文。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下依据本文固定版本 `56c912e0df7920ad0fbf5cd9d911628587b9c7e6` 的公开源码作静态分析，未实测当前小红书网页兼容性。
+
+### 身份验证方式：可选地传入网页 Cookie，没有独立的账号核验
+
+**它主要接受你手动提供的 Cookie，也允许不填。** Cookie 可以理解为网页请求携带的会话材料。README 教程让用户在浏览器中复制 Cookie，并明确“登录账号”可以跳过；所以填写 Cookie 并不必然代表某个已登录账号。程序把传入值交给 Python 的 HTTP 客户端，供后续请求使用。[Cookie 教程](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/README.md#L513-L524)、[客户端接收 Cookie](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/module/manager.py#L100-L114)
+
+- **不会自动确认“现在登录的是谁”。** 设置界面的“参数已设置”只检查 Cookie 是否非空；详情主流程检查 HTTP 请求是否成功，再尝试解析网页，没有先请求当前用户身份来核对账号、判断登录是否有效。[设置判断](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/TUI/setting.py#L225-L228)、[请求处理](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/application/request.py#L26-L79)
+- **“自动从浏览器读取 Cookie”在这个版本已停用。** 主程序的调用被注释，README 也标明失效；不能把残留辅助代码当成仍可用的登录方式。[主程序接线](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/application/app.py#L144-L160)、[功能说明](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/README.md#L131-L135)
+- **详情主链由 Python 准备普通网页请求头和 Cookie。** 这条链没有调用额外的 `X-S`／`X-T` 接口签名器，也不需要浏览器替它生成签名。仓库另有未接入主链的 `UserPosted` 签名骨架，其 `run()` 尚未实现。[网页请求头](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/module/static.py#L24-L29)、[主链组件](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/application/app.py#L178-L198)、[签名骨架](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/application/user_posted.py#L37-L71)
+
+### 帖子详情获取方式：主程序下载网页 HTML，另有浏览器用户脚本辅助
+
+**Python 主流程是“给链接 → 下载网页源文件 → 提取其中已有的帖子数据”。**
+
+**下载输入要求：提供完整且包含有效 `xsec_token` 的帖子链接。**
+
+1. 用户传入一条或多条链接；短链接先通过网络请求展开。因此处理范围首先由输入链接决定。[链接处理](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/application/app.py#L363-L395)
+2. Python 直接请求该网页，取得 HTML，从 `window.__INITIAL_STATE__` 中提取帖子对象。可以把它理解为“网页源文件中附带的一包帖子数据”；这里没有启动浏览器执行页面 JavaScript，也没有调用帖子详情 JSON 接口。[取得 HTML](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/application/app.py#L397-L426)、[提取页面数据](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/expansion/converter.py#L9-L45)
+3. 整理标题、正文、作者、互动数量等，再解析图片／视频地址，按设置下载媒体。这部分可作为 Python 脚本在后台运行，无需保持浏览器窗口，也不需要逐条模拟点击或导出 HAR。[详情字段](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/application/explore.py#L15-L72)、[详情与下载编排](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/application/app.py#L441-L517)
+
+**配套用户脚本则需要打开浏览器页面，有两种用途：**
+
+- **收集待处理链接。** 从当前发布、收藏、点赞、专辑、推荐或搜索页面中读取已加载的帖子列表，可自动滚动，也可勾选部分帖子；链接中的 `xsec_token` 来自页面数据。它收集的是页面实际加载出的范围，不能据此保证收齐全部帖子。[菜单选择范围](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/static/XHS-Downloader.js#L2279-L2337)、[页面数据与链接](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/static/XHS-Downloader.js#L809-L917)、[滚动停止规则](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/static/XHS-Downloader.js#L769-L807)
+- **处理当前已打开的帖子。** 用户点击脚本菜单后，它直接读取该页的帖子对象，可在浏览器侧下载媒体；启用脚本服务时，也能通过 WebSocket 把整包数据传给 Python 下载。这条路径沿用当前网页会话，Python 不再重新下载该帖 HTML，同样不经过 HAR。[读取与发送页面详情](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/static/XHS-Downloader.js#L524-L600)、[菜单入口](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/static/XHS-Downloader.js#L2287-L2301)、[Python 接收处理](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/application/app.py#L519-L547)
+
+主链还有一个具体限制：PC 网页解析取详情映射中的最后一项，没有核对返回的帖子 ID 是否等于目标 ID，因此解析出数据也不等于已经确认取对了帖子。[映射取值](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/expansion/converter.py#L12-L17)、[取最后一项的实现](https://github.com/JoeanAmier/XHS-Downloader/blob/56c912e0df7920ad0fbf5cd9d911628587b9c7e6/source/expansion/converter.py#L47-L66)
 
 状态：专项静态审查完成，独立复审通过
 审查日期：2026-08-13
@@ -147,7 +212,7 @@ XHS-Downloader 最有参考价值的部分是详情字段转换、图文与 Live
 
 ## 8. 对 Rednote Sync 的参考价值
 
-对照 [`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md)：
+对照 [`sync-core.md`](../../../projects/docs/sync-core.md)：
 
 | 方面 | 当前判断 | 边界 |
 |---|---|---|

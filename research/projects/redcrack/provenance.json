@@ -1,0 +1,77 @@
+{
+  "name": "RedCrack",
+  "artifactType": "git-working-tree-research-copy",
+  "sourceUrl": "https://github.com/Cialle/RedCrack.git",
+  "repository": "https://github.com/Cialle/RedCrack",
+  "revision": "a557e328b6e723f63dcd75f1c52640794f2c84b5",
+  "treeRevision": "9ab1a67a1233377bc2bfb9673f6751e900a6c695",
+  "branch": "master",
+  "capturedAt": "2026-09-12",
+  "commitDate": "2026-05-30T13:48:51+08:00",
+  "reviewPolicy": "tracked-files-only-static-review",
+  "checkoutPolicy": "depth-1-no-tags-no-submodules-no-lfs-hooks-disabled",
+  "checkoutState": "detached-head",
+  "trackedCount": 36,
+  "repositoryState": {
+    "dirty": false,
+    "trackedChanges": [],
+    "untracked": []
+  },
+  "licenseFiles": ["source/LICENSE"],
+  "licenseMetadata": ["source/README.md"],
+  "dependencyManifests": [],
+  "staticInventory": {
+    "pythonFiles": 31,
+    "pythonAstParseFailures": 0,
+    "trackedTestFiles": 0,
+    "trackedCiWorkflows": 0,
+    "trackedDependencyLockFiles": 0,
+    "externalImportRoots": [
+      "Crypto",
+      "aiohttp",
+      "aiohttp_socks",
+      "getuseragent",
+      "loguru",
+      "pydantic",
+      "xxhash"
+    ]
+  },
+  "validationScope": [
+    "Git commit/tree and tracked-file inventory",
+    "Python AST parsing without imports or execution",
+    "Function-call argument binding from AST signatures using Python inspect.Signature",
+    "INI literal inspection with ConfigParser and ast.literal_eval, not upstream eval",
+    "Static request/signing call-chain review",
+    "Current Rednote Sync contract comparison"
+  ],
+  "localContextFiles": [
+    {
+      "path": "docs/design/roadmap.md",
+      "sha256": "be16b58a4284405e6b6cb0ef282e6ca43754313891c78bc1a3de860e6ebc6549"
+    },
+    {
+      "path": "projects/rednote-sync-core/docs/sync-core.md",
+      "sha256": "c8b1810ffa0e0703d4965ac72100eefae7a2faa7d70dde912d015d5a582943b7"
+    },
+    {
+      "path": "projects/rednote-sync-core/docs/offline-input-v1.md",
+      "sha256": "4b77073554009c1b5a394c21f0f1dad3441413695dd71cb6a4b17412e890e932"
+    },
+    {
+      "path": "research/reverse/targets/xhs-xsec-token/experiment/scripts/protocol_session.py",
+      "sha256": "4797816d6d836971a7da4a27416ae9185b4295d6cd572d80edd1d040e3089561"
+    },
+    {
+      "path": "research/reverse/targets/xhs-xsec-token/experiment/scripts/protocol_signer_config.py",
+      "sha256": "75c928d71c880f460113ba371fcca7e633cfbea2fff70e8cc6054e937be4aa69"
+    }
+  ],
+  "notes": [
+    "The source directory is ignored by the owning repository; no upstream source was modified.",
+    "LICENSE contains MIT text while README separately states research-only and no-commercial-use restrictions; the review records this textual discrepancy without resolving legal precedence.",
+    "No dependency installation, upstream imports, tests, demo execution, browser login, credential access, API requests, or media downloads were performed.",
+    "Network access was limited to public GitHub source retrieval; static findings do not establish current Xiaohongshu compatibility or the cause of earlier HTTP 461 results.",
+    "LocalContextFiles hashes identify the dirty owning-project files used for comparison, not a committed release snapshot.",
+    "This shallow checkout does not provide a complete upstream history audit."
+  ]
+}

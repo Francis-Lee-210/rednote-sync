@@ -2,32 +2,18 @@
 
 状态：**研究证据索引**
 
-这里保存固定来源和范围下的项目审查、跨项目专题与逆向材料。研究可以支持产品讨论，但不能自行宣布产品决策。
+这里保存固定来源和范围下的项目审查、跨项目专题、候选启发与逆向材料。按任务选择入口；产品权威与当前进度见[文档地图](../docs/README.md)。
 
-## 目录
+| 阅读目的 | 入口 |
+|---|---|
+| 当前相关：导出与后续整理 | [当前相关专题](catalog.md#当前相关)：付费导出、语义资料库、项目启发与本地导出链路。实际 Notion／Galaxy 落盘工具另见 [note-library](../prototypes/note-library/README.md)。 |
+| 备用路线：需要比较或继续验证时 | [备用路线](catalog.md#备用路线)：浏览器、无头列表、Cookie、xsec、App 与协议实验；保留候选，不表示废弃或已获准执行。 |
+| 历史证据：追溯当时的结论 | [历史证据](catalog.md#历史证据)：固定版本比较、一次性 Cookie 研究和两个客户端逆向。 |
+| 某个参考项目的能力与版本 | [16 项专项报告](catalog.md#项目专项报告)：按主要参考用途分组；每项在 [`projects/`](projects/) 保留审查、provenance 与 checkpoint，`source/` 是被忽略的本地副本。 |
+| 逆向报告与实验工具的位置 | [逆向索引](reverse/README.md)：目标、工具及逐次方法与时间线。 |
 
-- [`catalog.md`](catalog.md)：研究对象、固定版本、状态、评级和报告入口。
-- [`projects/`](projects/)：14 个第三方项目的专项研究；每个目录包含审查、来源和 checkpoint，`source/` 是被忽略的本地副本。
-- [`topics/`](topics/)：跨多个项目或实验的专题综合。
-- [`reverse/`](reverse/)：客户端逆向目标、报告、工具和被忽略的样本。
+上述分组只帮助选择阅读入口，不是产品路线选择、弃用决定或在线验收。报告及专题原地保留，日期化结果不承担当前进度的维护职责。
 
-## 当前项目研究
+帖子整理研究统一维护于 [AI 分类与模型选型](../docs/explorations/ai-classification.md)：包含本地字段、官方与中转价格、套餐、分层成本及视频处理机制。2026-09-19核查，尚未进行模型实测。
 
-| 项目 | 报告 | 项目 | 报告 |
-|---|---|---|---|
-| XHS-Downloader | [review](projects/xhs-downloader/review.md) | OpenCLI | [review](projects/opencli/review.md) |
-| xhs-cli-export | [review](projects/xhs-cli-export/review.md) | Playwright | [review](projects/playwright/review.md) |
-| xiaohongshu-cli | [review](projects/xiaohongshu-cli/review.md) | MediaCrawler | [review](projects/mediacrawler/review.md) |
-| xiaohongshu-mcp | [review](projects/xiaohongshu-mcp/review.md) | ReaJason/xhs | [review](projects/reajason-xhs/review.md) |
-| Playwright MCP | [review](projects/playwright-mcp/review.md) | xiaohongshu-importer | [review](projects/xiaohongshu-importer/review.md) |
-| Spider_XHS | [review](projects/Spider_XHS/review.md) | XHS_ALL_IN_ONE | [review](projects/XHS_ALL_IN_ONE/review.md) |
-| xhs_web_crawler | [review](projects/xhs-web-crawler/review.md) | RedCaChe | [review](projects/redcache/review.md) |
-
-## 解释研究结论
-
-- 评级只表示固定 revision 和既定问题下的研究或采用参考价值。
-- 报告中的历史实施 Stage 1–4、实验账号限制和停止条件不自动成为当前产品要求。
-- “在线探测”表示为验证未知行为而进行的研究实验，不等同于用户正常运行的在线采集。
-- 当前产品权威见[产品设计](../docs/design/product-design.md)。
-
-修改本目录前必须遵守 [`research/AGENTS.md`](AGENTS.md)。第三方源码、依赖环境、缓存和本地运行数据不得因目录整理而执行或加入 Git。
+评级只对应记录的版本和问题，不代表产品决策或线上验收；历史实施阶段、实验账号限制及停止条件不自动成为当前产品要求。修改研究材料前遵守 [AGENTS.md](AGENTS.md)，不得因目录整理而执行第三方源码或把本地数据加入 Git。

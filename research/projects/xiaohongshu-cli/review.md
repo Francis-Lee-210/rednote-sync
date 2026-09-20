@@ -1,6 +1,37 @@
 # xiaohongshu-cli 专项源码审查
 
+GitHub：[jackwener/xiaohongshu-cli](https://github.com/jackwener/xiaohongshu-cli)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下基于固定版本 `4d63f3c0c85ccd9054fa8e96d7f761aaf2507449` 的公开源码静态分析；未运行项目，未实测当前小红书兼容性。
+
+### 身份验证方式：复用浏览器 Cookie，也提供扫码登录
+
+默认借用浏览器里已有的登录。Cookie 可理解为网站留下的会话凭据：普通命令优先读取已保存 Cookie，需要时再从本机浏览器提取；`login` 会强制重新提取。自动检测从多个浏览器选首个提取成功的结果，提取层只检查有没有 `a1` 字段，没有绑定你预期使用的账号。[缓存与提取](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/cookies.py#L481-L521) [自动选择](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/cookies.py#L430-L478) [提取判据](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/cookies.py#L350-L373) [普通登录](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/commands/auth.py#L97-L123)
+
+“拿到 Cookie”和“确认登录有效”是两步。普通 `login` 会请求个人信息，拒绝游客或无有效昵称的结果，但没有要求账号 ID 与预先指定值一致；`status`、扫码登录的输出判据更宽松，返回游客数据时仍可能显示 `authenticated: true`。[登录判据](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/commands/auth.py#L26-L31) [登录检查](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/commands/auth.py#L105-L123) [状态输出](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/commands/auth.py#L133-L145) [扫码输出](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/commands/auth.py#L64-L94)
+
+可选的 `login --qrcode` 会先启动有窗口的 Camoufox 浏览器完成扫码，再保存 Cookie；仅当代码抛出“浏览器扫码后端不可用”异常时，才转入纯 HTTP 二维码备用流程。两条实现并非 CLI 中两个同等可选的入口。备用流程会核对扫码确认的用户 ID 与完成登录或个人信息返回的 ID，一致性检查限于本次扫码过程。[浏览器启动](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/qr_login.py#L340-L359) [保存会话](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/qr_login.py#L404-L443) [备用条件](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/qr_login.py#L535-L548) [扫码 ID 核对](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/qr_login.py#L200-L253)
+
+请求接口所需的签名由程序的 `signing.py` 调用 `xhshow` 依赖准备，客户端把签名和 Cookie 放进请求头。[签名组件](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/signing.py#L49-L75) [请求组装](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/client.py#L203-L217)
+
+### 帖子详情获取方式：Python 直接请求接口，必要时下载网页 HTML
+
+你用 `read` 指定帖子 ID、链接或最近一次列表的短序号。程序从输入或缓存配对帖子 ID、`xsec_token`（帖子访问参数）和来源，再读取这一条详情。[输入解析](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/note_refs.py#L11-L27) [读取命令](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/commands/reading.py#L82-L106)
+
+| 条件 | 代码实际执行的获取方式 |
+| --- | --- |
+| 有传入或缓存的 token | 先向 `/api/sns/web/v1/feed` 发送 HTTP POST，读取接口返回的数据。 |
+| 没有 token，或上述接口触发代码捕获的错误 | 用 HTTP GET 下载帖子网页 HTML，解析其中的 `window.__INITIAL_STATE__`，提取帖子对象。 |
+
+这张表描述代码会尝试的分支，不能证明当前无 token 也能读取成功。HTML 路线同样是网络请求，不执行网页 JavaScript；精确帖子 ID 未匹配时，解析器还会取第一条数据，可能取错帖子。[接口与分支](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/client_mixins.py#L318-L368) [HTML 请求](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/client_mixins.py#L200-L220) [HTML 解析与匹配](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/html_parser.py#L19-L73)
+
+帖子范围由命令参数决定：搜索指定关键词和页码，推荐流返回一批列表，收藏／点赞指定用户和分页位置。这些列表命令会保存可供后续选择的序号，但不会自动逐帖补详情或遍历全部页面；批量读取需要调用方继续翻页、逐条调用 `read`。[搜索](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/commands/reading.py#L53-L79) [推荐流](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/commands/reading.py#L193-L211) [收藏／点赞分页](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/commands/social.py#L14-L48) [命令参数](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/commands/social.py#L81-L106)
+
+普通详情链由 HTTPX 发请求，有可用会话后可以作为后台 Python 命令运行，无须保留已打开的帖子页面、逐条点击或导出 HAR；浏览器主要提供 Cookie，扫码路线另有上述浏览器步骤。项目也未提供图片／视频文件下载。[HTTP 客户端](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/xhs_cli/client.py#L50-L59) [媒体能力声明](https://github.com/jackwener/xiaohongshu-cli/blob/4d63f3c0c85ccd9054fa8e96d7f761aaf2507449/SKILL.md#L230-L237)
 
 状态：专项静态审查完成，三类独立复审通过
 审查日期：2026-08-13
@@ -186,7 +217,7 @@ xiaohongshu-cli 最值得参考的是命令层、领域 mixin 与 transport 的�
 | Cookie 名称 allowlist | 登录材料最小化 | 仅借鉴名称 allowlist；另做严格 domain 校验，不扫描日常浏览器，不向 Agent 返回原值 |
 | command/mixin/transport 分层 | Provider 内部模块边界 | 生产只读 allowlist；平台写、本地文件、secret capability分开 |
 
-历史实施 Stage 3 继续遵循 [`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md) 的完全离线边界。本项目所有运行能力都依赖网络、Cookie、签名或浏览器，只属于历史实施 Stage 4，且不能覆盖 Core 对 canonical state、cursor、checkpoint 和 media receipt 的所有权。
+历史实施 Stage 3 继续遵循 [`sync-core.md`](../../../projects/docs/sync-core.md) 的完全离线边界。本项目所有运行能力都依赖网络、Cookie、签名或浏览器，只属于历史实施 Stage 4，且不能覆盖 Core 对 canonical state、cursor、checkpoint 和 media receipt 的所有权。
 
 ## 10. 采用分级与排除项
 

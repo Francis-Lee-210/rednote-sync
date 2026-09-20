@@ -1,6 +1,40 @@
 # XHS_ALL_IN_ONE 专项源码审查
 
+GitHub：[cv-cat/XHS_ALL_IN_ONE](https://github.com/cv-cat/XHS_ALL_IN_ONE)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下基于固定版本 `63b85de2b15b3f79134b08fa675381505f45d4db` 的公开源码静态分析；未运行项目，未实测当前小红书兼容性。
+
+这是带网页操作界面、后端服务和数据库的运营工具。下面解释普通网页版（PC）的采集链；创作者中心另有账号类型和发布模块。[项目结构](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/README.md#L190-L216)
+
+### 身份验证方式：系统账号与小红书账号分开，按所选账号恢复 Cookie
+
+首先登录的是这套工具自己的账号：用户名、密码换取本系统的访问 token，并不表示已登录小红书。[系统登录](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/auth.py#L43-L72)
+
+小红书会话另行取得：可以手动提交完整 Cookie，也可以由后端请求二维码、等待手机确认，或发送并验证短信验证码。WebUI 调用登录接口，不会自动读取用户日常浏览器的 Cookie。成功后按平台用户 ID 新建／更新账号，保存加密 Cookie 版本；采集请求带 `account_id`，后端解密该账号最新版本。[Cookie 导入](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/accounts.py#L105-L145) [扫码与短信适配](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/adapters/xhs/pc_login_adapter.py#L8-L78) [版本保存](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/services/account_service.py#L113-L160) [选择与恢复](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/platforms/xhs/pc.py#L281-L298)
+
+PC 导入、账号复查，以及 WebUI 扫码／短信的收尾，都调用用户资料接口。适配层只要求响应 `success`，没有强制非空用户 ID、`guest=false` 或预期账号比对；复查还会覆盖原账号 ID。因此，“active”只表示通过这套检查。普通采集读取 Cookie 时也不要求记录为 active、不会先调用账号复查；监控若找不到所选可用账号，还会改取第一个 active PC 账号。[实际身份请求](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/apis/xhs_pc_login_apis.py#L652-L670) [判据](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/adapters/xhs/pc_login_adapter.py#L38-L57) [扫码收尾](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/login_sessions.py#L227-L252) [短信收尾](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/login_sessions.py#L363-L381) [复查更新](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/accounts.py#L173-L188) [监控选择](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/services/monitoring_crawl_service.py#L30-L42)
+
+详情底层需要用户 ID 时另会运行 `bootstrap()`，要求资料请求成功且 ID 非空，仍不比对预期账号。请求签名则由内嵌 Python 组件调用 Node.js 准备，不能把签名生成成功当作登录验证。[底层检查](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/apis/xhs_pc_apis.py#L72-L81) [触发与组装](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/apis/xhs_pc_apis.py#L119-L133) [签名组件](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/xhs_utils/xhs_pc/params.py#L180-L197) [Node 进程](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/xhs_utils/xhs_pc/runtime.py#L108-L117)
+
+### 帖子详情获取方式：后端请求 HTTP API，不同入口决定是否补取详情
+
+帖子由用户提交的网址、关键词、页数／数量上限等参数决定，并非采集浏览器当前页面的所有帖子。各入口有区别：
+
+| 入口 | 实际采集范围 |
+|---|---|
+| 单帖／链接批次 | 对指定网址逐条请求详情。[批次循环](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/platforms/xhs/crawl.py#L262-L299) |
+| 普通搜索 | 请求指定页，整理列表数据，不逐条补详情。[普通搜索](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/platforms/xhs/crawl.py#L226-L258) |
+| 显示逐条进度的搜索（SSE） | 按页数和数量上限搜索，对得到的网址继续请求详情，并可选取评论；没有网址时保留列表项。[搜索与补详情](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/platforms/xhs/crawl.py#L415-L473) |
+| 用户发布／喜欢／收藏 | SDK 有列表方法，但用户发布路由把返回的数组交给只接收字典的解析器，会得到空列表；喜欢、收藏未接入上述采集适配器，不能称为现成的完整采集流程。[发布列表](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/apis/xhs_pc_apis.py#L321-L350) [喜欢](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/apis/xhs_pc_apis.py#L380-L409) [收藏](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/apis/xhs_pc_apis.py#L439-L468) [路由调用](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/platforms/xhs/crawl.py#L317-L323) [解析器](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/platforms/xhs/crawl.py#L116-L121) [适配器范围](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/adapters/xhs/pc_api_adapter.py#L8-L59) |
+| 后台自动任务的采集部分 | 从配置关键词中选一个，只搜索第一页，再从前十项中选素材。[后台搜索范围](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/services/scheduler_service.py#L457-L478) |
+
+真正的详情方法从 URL 提取 ID、token、source，向 `/api/sns/web/v1/feed` 发 POST 并读取 JSON，没有 HTML 或浏览器导航备用链。列表中有 token 时会与 ID、source 一起构建详情 URL；缺 source 使用默认值，缺 token 不会自动生成，也不能据此证明帖子可访问。[详情方法](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/apis/xhs_pc_apis.py#L470-L503) [访问材料配对](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/platforms/xhs/pc.py#L135-L152)
+
+浏览器主要用于操作本工具的 WebUI；采集由后端 Python、HTTP 客户端和 Node.js 执行，可以在后台服务中运行，不需另开小红书页面、逐帖点击或导出 HAR。Node.js 和名为 `BrowserHttpClient` 的 HTTP 组件都不是浏览器进程。媒体另经 HTTP 下载；普通采集可保存内容库，SSE 流程的结果列表却没有调用入库函数，界面出现结果不等于已经保存。[HTTP 实现](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/xhs_utils/xhs_core/http.py#L79-L100) [媒体下载](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/services/asset_downloader.py#L11-L29) [SSE 结果与结束](https://github.com/cv-cat/XHS_ALL_IN_ONE/blob/63b85de2b15b3f79134b08fa675381505f45d4db/backend/app/api/platforms/xhs/crawl.py#L464-L497)
 
 状态：专项静态审查完成；独立复审通过
 审查日期：2026-08-13

@@ -1,6 +1,44 @@
 # xiaohongshu-importer 专项源码审查
 
+GitHub：[bnchiang96/xiaohongshu-importer](https://github.com/bnchiang96/xiaohongshu-importer)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下基于固定版本 `b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37` 的公开源码静态分析；未运行项目，未实测当前小红书兼容性。
+
+### 身份验证方式：没有专门的小红书登录流程，请求只显式传入网址
+
+这是一个在 Obsidian 中运行的笔记导入插件。用户通过侧栏图标或命令打开输入框，粘贴分享文案并选择分类；插件设置只有保存目录、分类和媒体下载偏好，没有小红书账号、Cookie、扫码登录或外部解析服务 API key 配置。[设置与入口](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L1-L73)
+
+采集时调用的是 Obsidian 的 `requestUrl({ url })`，这次调用没有显式提供 Cookie、认证请求头或请求签名。它也不查询当前小红书用户、不核对预期账号；在 Obsidian 中运行插件和允许写入知识库，并不等于取得小红书账号身份。[网页请求](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L120-L131) [本地写入](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L236-L248)
+
+这里能确认的是“插件没有自行管理平台身份”，不能据此宣称当前一定可以匿名访问所有帖子：Obsidian 网络层是否隐式携带会话材料、本次平台会返回正文还是登录／受限页面，都没有实测。网页链接里原有的查询参数会保留，但插件没有单独获取、刷新或验证帖子 token 的流程。[链接提取](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L76-L92)
+
+### 帖子详情获取方式：下载分享页 HTML，在本地解析并写入单篇 Markdown
+
+一次导入只处理一个链接。输入可以是链接，也可以是包含链接的分享文案：优先取第一个匹配的短链，没有时再取第一个网页版帖子链接。粘贴多篇不会变成批量任务，插件也没有搜索、收藏／点赞列表发现或自动翻页流程。固定规则只接受 `http://xhslink.com/...` 这一类短链，以及指定格式的 HTTPS 网页链接；`explore` 路径会替换为 `discovery/item`。[单篇调用](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L20-L52) [匹配规则](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L76-L92)
+
+```text
+用户粘贴分享文案，选择分类
+    ↓
+提取一个帖子网址
+    ↓
+Obsidian 发网络请求，取得 HTML 文本
+    ↓
+插件从 HTML 和其中嵌入的初始数据提取标题、正文、媒体地址
+    ↓
+按选择保留远端媒体，或下载媒体
+    ↓
+创建并打开一篇 Markdown 笔记
+```
+
+解析工作由插件本身完成，没有把链接交给另一家解析服务。标题取自 HTML 的 `<title>`；正文先匹配固定的正文标签，失败再查 `window.__INITIAL_STATE__` 中的 `desc`；图片、视频地址也从这段嵌在网页里的数据中读取。这里是对下载文本做正则匹配和 JSON 解析，不会让浏览器执行网页脚本后再读取页面对象。[请求与解析调用](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L120-L131) [标题与媒体](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L251-L303) [正文解析](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L305-L333)
+
+媒体下载默认关闭，此时笔记保留远端图片／视频引用；开启后用 `fetch` 下载字节，写入知识库的媒体目录，再引用本地文件。Markdown 默认保存在 `XHS Notes` 下的分类目录，完成后自动打开。[默认设置](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L10-L15) [媒体下载](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L103-L118) [目录与视频输出](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L145-L186) [图片与笔记输出](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L199-L244)
+
+因此，不需要先打开小红书浏览器页面、逐帖点击或导出 HAR；现成入口仍依赖 Obsidian，仓库没有独立的后台命令行采集器。还要区分“创建了笔记”和“详情提取完整”：解析器会取初始数据中的第一条帖子而不比对目标 ID，解析失败可能留下空媒体或占位正文，主流程仍可创建文件并显示导入成功。[首条选择及降级](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L257-L333) [创建与完成提示](https://github.com/bnchiang96/xiaohongshu-importer/blob/b1d3e3b4b4f917c06a8a627cd4c0bd24cf45ce37/main.ts#L236-L248)
 
 状态：专项静态审查完成；独立复审通过
 审查日期：2026-08-13
@@ -148,7 +186,7 @@ Obsidian 用户分享文本
 
 ### 10.2 与 `sync-core.md` 的映射
 
-- 对照基线是本地 [`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md)；候选插件不改变其中历史实施 Stage 3 已完成、历史实施 Stage 4 前暂停的边界。
+- 对照基线是本地 [`sync-core.md`](../../../projects/docs/sync-core.md)；候选插件不改变其中历史实施 Stage 3 已完成、历史实施 Stage 4 前暂停的边界。
 - **canonical：不采用。** 插件输出缺稳定ID、版本化schema、字段provenance、媒体slot与hash，不能成为source of truth。Core的SQLite/object store继续独占canonical状态。
 - **derived knowledge-base view：可借鉴意图。** category folder、frontmatter、媒体相对引用和导入后打开笔记是projector UX输入；必须由安全canonical Note和已验证object生成，并以receipt/稳定key处理碰撞。
 - **checkpoint/恢复：缺失。** 网络、解析、媒体、Markdown和设置写入必须拆分；远端预取在历史实施 Stage 4 事务外执行，短事务重新校验expected account/revision/object refs，知识库projection失败不改变canonical正确性。

@@ -1,6 +1,33 @@
 # OpenCLI 专项源码审查
 
+GitHub：[jackwener/OpenCLI](https://github.com/jackwener/OpenCLI)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下聚焦固定版本 `a86d64705c526dc710f790e66cfcabf6ecf786b9` 的小红书适配器，依据公开源码静态分析，未实测当前小红书网页兼容性。
+
+### 身份验证方式：借用 Chrome 中的会话，再到创作者中心检查登录
+
+**它通过 Browser Bridge 扩展控制正在运行的 Chrome，沿用该浏览器环境里的小红书登录状态。** `profile` 可以理解为 Chrome 的一套用户环境，里面保存着该环境的 Cookie 等网页状态。OpenCLI 给自动化另开窗口时，仍使用原 profile；新窗口不代表另一个小红书账号。[连接方式](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/README.md#L41-L61)、[窗口与 profile 的关系](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/extension/src/background.ts#L923-L930)
+
+- **已有登录就复用，需要登录时让用户操作网页。** `login` 先尝试身份请求；若提示需要认证，才打开登录页，等待用户完成网页上的登录，并轮询确认，默认最多等五分钟。[登录流程](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/_shared/site-auth.js#L73-L115)
+- **它的实际检查发生在创作者中心。** 快检只看 `creator.xiaohongshu.com` 是否有 `web_session`；`whoami/login` 的身份核验则进入创作者中心，在网页里执行带 Cookie 的 `fetch` 请求 `personal_info` 接口，要求 HTTP 成功且存在数据，返回昵称和粉丝数。这里没有核对稳定账号 ID，也没有与用户指定账号做比较。[小红书身份实现](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/auth.js#L4-L53)
+- **浏览器选择与账号验证是两件事。** `--profile` 选择连接到哪个浏览器环境，不会验证其中当前登录的是谁；显式选择要求该环境在线，而保存的默认环境失联时允许回退。这也意味着创作者中心核验成功，仍不能证明普通用户站 `www.xiaohongshu.com` 的目标帖子可读。[profile 路由](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/src/browser/profile.ts#L56-L90)、[正文入口与登录墙检查](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/note.js#L49-L89)
+
+### 帖子详情获取方式：命令控制真实网页，正文和媒体分开提取
+
+**读取正文的 `note` 命令会直接打开你给的帖子链接，再读取页面元素中的文字。** 所谓 DOM，就是网页上的标题、正文、作者、按钮等元素。它等待约 2–5 秒后，提取标题、作者、正文、互动数量和标签，返回“字段／值”列表；这条正文链没有直接调用详情 JSON 接口，也没有自行计算 `X-S`／`X-T` 签名，网页加载由浏览器完成。[打开与提取流程](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/note.js#L49-L103)、[实际读取的页面元素](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/note.js#L17-L48)
+
+**`download` 是另一条媒体链。** 它也打开帖子，但优先从页面的 `__INITIAL_STATE__`（网页保存的结构化帖子数据）中取图片、视频地址，缺失时再读页面元素或内嵌脚本；随后提取浏览器 Cookie，交给本地 Node.js 下载器通过 HTTP 保存媒体文件。因此，“正文来自 DOM”和“媒体优先来自页面数据”应分开理解。[媒体数据来源](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/download.js#L75-L195)、[导航与下载交接](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/download.js#L218-L247)、[本地 HTTP 下载](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/src/download/media-download.ts#L114-L145)
+
+**处理哪些帖子，由你调用的命令和参数决定：**
+
+- `note` 每次处理传入的一篇帖子，要求完整链接中已有 `xsec_token`；`download` 还接受小红书短链接。它们不会仅凭一个帖子 ID 自动寻找访问材料。[输入限制](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/note-helpers.js#L39-L68)
+- 批量时，可先用搜索、推荐、收藏或点赞命令取得链接，再由调用脚本逐篇交给详情命令。收藏／点赞会导航到相应个人主页栏目，监听列表响应，无结果才退回读取页面卡片；这属于“发现帖子”步骤，不能概括成每篇正文都靠网络拦截取得。列表有数量和滚动上限，不能保证完整枚举。[发现命令](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/docs/adapters/browser/xiaohongshu.md#L9-L18)、[收藏／点赞发现流程](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/clis/xiaohongshu/collection-helpers.js#L239-L282)
+
+**可以从后台脚本发命令，但这条详情路线仍需要 Chrome 和扩展运行。** 自动化窗口默认不抢焦点，代码创建的仍是普通浏览器窗口，并非无头浏览器。它直接导航到帖子地址、执行提取脚本，不需要你逐条手动点封面，也没有手动导出 HAR 的环节。[后台窗口模式](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/extension/src/background.ts#L442-L445)、[窗口创建](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/extension/src/background.ts#L994-L1004)、[在浏览器执行脚本](https://github.com/jackwener/OpenCLI/blob/a86d64705c526dc710f790e66cfcabf6ecf786b9/extension/src/background.ts#L1667-L1686)
 
 状态：专项静态审查完成，独立复审通过
 审查日期：2026-08-13
@@ -143,7 +170,7 @@ OpenCLI 最值得 Rednote Sync 借鉴的不是整个 Browser Bridge，而是四�
 
 ## 8. 对 Rednote Sync 的参考价值
 
-对照 [`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md)：
+对照 [`sync-core.md`](../../../projects/docs/sync-core.md)：
 
 | 方面 | 当前判断 | 采用边界 |
 |---|---|---|

@@ -1,6 +1,39 @@
 # MediaCrawler 专项源码审查
 
+GitHub：[NanmiCoder/MediaCrawler](https://github.com/NanmiCoder/MediaCrawler)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下基于固定版本 `5665a271ef15e0ec82b1f48a951b66760e054db9` 的公开源码静态分析；未运行项目，未实测当前小红书兼容性。
+
+### 身份验证方式：浏览器建立或恢复会话，再把 Cookie 交给 Python
+
+启动时先取得浏览器会话。默认连接已经开启调试接口的浏览器，优先复用第一个浏览器环境；连接失败会尝试标准 Playwright 浏览器。标准模式默认把登录环境保存在项目的 `browser_data` 目录，供下次复用。浏览器环境的选择本身没有确认平台账号。[默认配置](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/config/base_config.py#L46-L83) [复用浏览器环境](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/tools/cdp_browser.py#L360-L398) [持久会话与备用启动](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/core.py#L414-L471)
+
+浏览器先打开主页，程序读取站点 Cookie（会话凭据）建立 HTTP 客户端，再调用 `pong()` 请求个人信息接口，检查返回的嵌套 `success` 字段。检查失败才执行所选登录分支，默认选扫码；登录结束后只更新 Cookie，没有再调用 `pong()`，也没有把稳定账号 ID 与用户指定账号比较。[启动与登录顺序](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/core.py#L100-L128) [读取 Cookie](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/core.py#L381-L412) [个人信息探针](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/client.py#L272-L304) [默认登录方式](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/config/base_config.py#L27-L32)
+
+- **扫码／手机验证码：** 在浏览器页面完成登录，以侧栏出现“我”或 `web_session` 变化作为成功判据。手机分支还需要号码和验证码来源，当前启动入口把手机号留空，验证码实现从缓存读取。[交互登录判据](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/login.py#L51-L97) [手机登录输入](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/login.py#L120-L158) [扫码等待](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/login.py#L167-L211)
+- **外部 Cookie：** 从传入字符串中只取 `web_session` 注入浏览器，随后回读该站点整组 Cookie 更新 HTTP 请求头；并非把整串 Cookie 原样注入，也不经过扫码／手机的登录等待检查。[Cookie 注入](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/login.py#L213-L224) [回读会话](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/client.py#L306-L320)
+
+本固定版本的接口签名由 Python 调用 `xhshow` 依赖准备，传入客户端的浏览器页面没有参与签名计算。浏览器在这里主要承担登录和会话来源的角色。[签名调用](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/client.py#L90-L125) [签名适配](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/playwright_sign.py#L33-L71)
+
+### 帖子详情获取方式：按配置发现帖子，HTTP API 为主、HTTP HTML 为备用
+
+采集对象由你配置的模式决定，程序会为选中的帖子自动安排详情任务，无须先在浏览器打开某个列表：
+
+| 模式 | 帖子清单来自哪里 |
+| --- | --- |
+| `search`（默认） | 指定关键词的搜索接口，按起始页和数量配置翻页。 |
+| `detail` | 配置中给出的帖子链接清单。 |
+| `creator` | 指定创作者，分页请求其已发布帖子列表，并为各页补详情。 |
+
+搜索／创作者列表返回的帖子 ID、`xsec_token`（访问参数）、来源会一起传给详情任务；指定帖子的这些参数从链接中解析。数量配置限定范围，不能理解为“收齐用户当前浏览器页面的所有帖子”。[搜索与详情任务](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/core.py#L134-L175) [指定帖子](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/core.py#L258-L284) [创作者任务](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/core.py#L193-L250) [创作者分页上限](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/client.py#L637-L697)
+
+每条先用 HTTP POST 请求 `/api/sns/web/v1/feed`，提取返回的 `note_card`。返回为空或重试耗尽后，才携带 Cookie 用 HTTP GET 下载帖子 HTML，解析 `window.__INITIAL_STATE__`。这个备用路径也不执行网页 JavaScript；帖子不存在、IP／平台限制等已分类异常会被外层跳过，并非任意失败都会转 HTML。[详情接口](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/client.py#L354-L389) [备用条件](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/core.py#L304-L344) [HTML 请求](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/client.py#L719-L752) [页面数据解析](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/extractor.py#L31-L50)
+
+因此，普通采集由 Python 发网络请求，不逐篇点击帖子，也不需要 HAR。整个启动流程仍需要浏览器进程；选择程序自行启动浏览器并启用无头模式后，可在后台运行，无须事先手动打开日常浏览器。默认的自启参数为有窗口。图片／视频下载另有开关，默认关闭，开启后再按媒体地址发 HTTP 请求。[HTTP 执行器](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/tools/httpx_util.py#L6-L13) [浏览器启动](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/core.py#L77-L101) [自启或连接现有浏览器](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/tools/cdp_browser.py#L97-L133) [媒体开关](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/config/base_config.py#L107-L108) [媒体请求](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/xhs/client.py#L249-L270)
 
 状态：专项静态审查完成，独立复审通过
 审查日期：2026-08-13
@@ -41,7 +74,7 @@ MediaCrawler 最值得参考的是 Browser 登录态、HTTP API、HTML Extractor
 - XHS二维码helper存在“DOM URL → 跟随重定向HTTP请求”的条件性SSRF/秘密日志面；另有仅接入抖音登录的自动滑块实现，明确排除在Rednote Sync之外。[QR helper](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/tools/crawler_util.py#L43-L63) [Douyin滑块调用](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/media_platform/douyin/login.py#L150-L242)
 - CSV/Excel直接写入上游字符串，缺少公式前缀中和；现有派生导出器也不能直接采用。[CSV](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/tools/async_file_writer.py#L46-L55) [Excel](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/store/excel_store_base.py#L206-L227)
 - 根许可证仅允许非商业学习/研究并限制大规模抓取；`webui/LICENSE`另含GPLv3，适用边界仍需上游澄清。当前只借鉴行为，不复制、链接或分发源码。[根LICENSE](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/LICENSE#L1-L28) [WebUI LICENSE](https://github.com/NanmiCoder/MediaCrawler/blob/5665a271ef15e0ec82b1f48a951b66760e054db9/webui/LICENSE#L1-L20)
-- 历史实施 Stage 3 继续完全离线；任何浏览器、Cookie、签名、API、媒体网络或账号能力只属于历史实施 Stage 4 的独立授权、规格和验收门。对照[`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md)。
+- 历史实施 Stage 3 继续完全离线；任何浏览器、Cookie、签名、API、媒体网络或账号能力只属于历史实施 Stage 4 的独立授权、规格和验收门。对照[`sync-core.md`](../../../projects/docs/sync-core.md)。
 
 ## 3. 架构、获取分层与数据流
 
@@ -242,7 +275,7 @@ Playwright / CDP 浏览器
 | 多 Store factory | canonical → derived exporter边界 | provider dict/逗号字符串不能定义 core Schema |
 | API 单进程 lock | 未来 Adapter session owner 的局部参考 | 仍需持久 lease、认证、审计和重启恢复 |
 
-历史实施 Stage 3 继续遵循 [`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md) 的完全离线边界。MediaCrawler 的全部运行能力都依赖浏览器、Cookie、签名、网络或账号，只能属于历史实施 Stage 4；它不能接管 Core 的 canonical state、cursor、checkpoint、media receipt 或 exporter所有权。
+历史实施 Stage 3 继续遵循 [`sync-core.md`](../../../projects/docs/sync-core.md) 的完全离线边界。MediaCrawler 的全部运行能力都依赖浏览器、Cookie、签名、网络或账号，只能属于历史实施 Stage 4；它不能接管 Core 的 canonical state、cursor、checkpoint、media receipt 或 exporter所有权。
 
 ## 10. 采用分级与排除项
 

@@ -1,0 +1,21 @@
+{
+  "accounts": [
+    {
+      "account_id": "test_a",
+      "label": "测试账号 A",
+      "source": "self_registered",
+      "cookie": "",
+      "user_agent": "",
+      "profile_dir": "profiles/test_a",
+      "expected_user_id_sha256": ""
+    },
+    {
+      "account_id": "test_b",
+      "source": "self_registered",
+      "cookie": "",
+      "user_agent": "",
+      "profile_dir": "profiles/test_b",
+      "expected_user_id_sha256": ""
+    }
+  ]
+}

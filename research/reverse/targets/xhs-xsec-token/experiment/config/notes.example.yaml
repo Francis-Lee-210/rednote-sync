@@ -1,0 +1,14 @@
+# 公开帖子样本。capture 只接受 enabled=true 且 type=public 的条目。
+# search_queries 按顺序放标题、正文片段或其他人工确认的发现关键词。
+notes:
+  - note_id: "REPLACE_NOTE_ID"
+    type: public
+    search_queries:
+      - "REPLACE_EXACT_TITLE_OR_KEYWORDS"
+    enabled: false
+
+  - note_id: "REPLACE_NOTE_ID_2"
+    type: public
+    search_queries:
+      - "REPLACE_BODY_KEYWORDS"
+    enabled: false

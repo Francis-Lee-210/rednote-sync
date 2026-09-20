@@ -1,6 +1,38 @@
 # `ValerieTse/RedCaChe` 专项源码审查
 
+GitHub：[ValerieTse/RedCaChe](https://github.com/ValerieTse/RedCaChe)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下基于固定版本 `b3526e66ed1d5b78e35a390edf1b7f29e1399ee9` 的公开源码静态分析；未运行项目，未实测当前小红书兼容性。
+
+仓库同时保留两套实现：新加入的 Chrome 扩展自行采集并存入浏览器数据库，不需要本地服务器；旧版是 Python 后端配合 Playwright。两者各用自己的资料库，不能把旧版能力算到扩展上。[扩展定位及两版关系](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/README.md#L24-L49)
+
+### 身份验证方式：扩展沿用当前浏览器登录，旧后端复用独立浏览器会话
+
+**纯扩展：** 用户先在安装扩展的浏览器中正常登录小红书／RedNote。扩展在该会话中打开页面，没有通过 Cookie API 读取、导出 Cookie，也没有自行生成请求签名的组件；网页加载仍由浏览器和网站脚本完成。[使用入口](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/README.md#L15-L20) [权限与页面脚本](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/manifest.json#L1-L18) [打开页面](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/background.js#L38-L59)
+
+“检查登录”依据网址、页面上的登录／账号文字和个人主页链接判断，不请求当前用户接口、不确认稳定账号 ID，也不比对用户期望的账号。它是单独按钮，导入不会自动先执行这项检查。[判定逻辑](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/content-script.js#L161-L168) [检查与导入按钮](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/popup.js#L31-L85) [导入调用](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/background.js#L61-L77)
+
+**旧后端：** 程序启动可见浏览器，让用户在网页中手动登录，再用配置的持久目录保存和恢复 Cookie 等会话；不是读取日常 Chrome 当前标签页，也不是自带二维码接口登录。其检查要求“站点 Cookie 数量大于零＋账号界面线索”，并优先识别登录／验证页面；导入前要求 `logged_in`，但同样没有预期账号比对。[手动登录](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/crawler/importer.py#L53-L65) [持久浏览器](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/crawler/browser.py#L74-L115) [登录判据](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/crawler/importer.py#L920-L944) [导入检查](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/crawler/importer.py#L581-L589)
+
+### 帖子详情获取方式：读页面 DOM，收藏导入和逐帖标题补全是不同操作
+
+扩展提供收藏地址检测：从个人主页链接拼出 `?tab=fav` 收藏地址，也允许手动填写。实际抓取的是该页面中符合域名、帖子路径和卡片结构的条目；没有独立的关键词搜索或点赞列表发现流程。[收藏地址](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/content-script.js#L171-L188) [手动填写](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/popup.js#L48-L74) [条目筛选](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/content-script.js#L21-L82)
+
+| 操作 | 实际读取内容 |
+|---|---|
+| 扩展“导入收藏” | 用户点击后，扩展新开并激活收藏页，自动滚动，读取卡片链接、标题、作者、可见文字和一个缩略图地址；不逐帖打开。[编排](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/background.js#L61-L77) [卡片读取](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/content-script.js#L55-L82) |
+| 扩展“补全标题” | 从资料库选缺标题记录，默认最多 500 篇；复用一个非活动标签页，逐篇导航，再读页面标题、`h1` 或标题元数据。只补标题，不补完整正文、评论或媒体清单。[选择与导航](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/background.js#L97-L127) [标题字段](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/content-script.js#L123-L133) |
+| 旧后端 | 同样滚动收藏页读 DOM、存入自己的数据库；公开入口有标题补全。更丰富的 `enrich_posts()` 会逐帖打开页面、提取正文等字段，但没有接入公开 crawler 路由。[收藏导入](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/crawler/importer.py#L591-L634) [DOM 抽取](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/crawler/importer.py#L1339-L1359) [详情编排](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/crawler/importer.py#L343-L365) [正文来源](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/crawler/importer.py#L1538-L1567) [公开路由](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/routers/crawler.py#L29-L127) |
+
+主扩展没有拦截 fetch／XHR、读取帖子初始状态或导出 HAR；读取结果一次返回后才入 IndexedDB。它会保留带查询参数的打开链接，但不自行生成或验证帖子 token。[入库调用](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/background.js#L67-L73) [浏览器数据库](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/src/lib/db.js#L5-L25) [链接保留](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/src/lib/extraction.js#L88-L124)
+
+扩展最多滚动 100 次，观测位置连续 6 次不变就停止；内层容器滚动时却读取外层位置，可能提前停止，不能保证收齐全部收藏。[滚动与停止](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/extension/content-script.js#L84-L120)
+
+扩展的“后台”仍依赖正在运行的 Chrome 和真实标签页，service worker 不等于无浏览器脚本。旧后端的定时收藏抓取与标题补全确实可用无头模式，但仍启动 Playwright 浏览器进程；这项能力不能外推给扩展。[定时抓取](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/services/daily_fetch.py#L35-L53) [旧版标题补全](https://github.com/ValerieTse/RedCaChe/blob/b3526e66ed1d5b78e35a390edf1b7f29e1399ee9/backend/app/crawler/importer.py#L223-L247)
 
 研究日期：2026-08-17（Pacific/Auckland）
 官方仓库：<https://github.com/ValerieTse/RedCaChe>

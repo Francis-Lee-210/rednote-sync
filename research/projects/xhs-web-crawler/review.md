@@ -1,6 +1,43 @@
 # `leafiy/xhs_web_crawler` 专项源码审查
 
+GitHub：[leafiy/xhs_web_crawler](https://github.com/leafiy/xhs_web_crawler)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下用通俗语言解释本文固定版本的使用流程；尚未实测它对当前小红书页面是否仍然可用。
+
+### 身份验证方式：沿用浏览器里已经登录的账号
+
+**先在 Chrome 中打开小红书网页版，按网页提示手动登录，再启动扩展。** 后续使用的是这个页面已经登录的账号。网页和浏览器负责使用已有登录状态发送请求，扩展负责在页面上点击；你无需另外把 Cookie 复制进扩展或 Python 脚本。[原项目使用说明](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/README.md#L42-L73)、[页面点击代码](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/chrome_extension/content.js#L96-L124)
+
+扩展没有单独核验当前账号或自动重新登录的流程，登录失效后需要回到网页处理。后面的 Python 脚本只离线解析已经导出的 HAR 文件，不负责登录，也不向小红书请求帖子。[扩展控制逻辑](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/chrome_extension/content.js#L164-L218)、[离线解析脚本](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/extract-content.py)
+
+### 帖子详情获取方式：页面点击 → 手动导出 HAR → Python 离线提取
+
+**浏览器逐条点开帖子，让网页加载详情，再通过手动导出的 HAR 文件提取数据。** 整个流程分成四步：
+
+1. **人工准备目标页面**：在已登录的小红书标签页中搜索关键词，并打开 Chrome 开发者工具的 Network 面板。[使用说明](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/README.md#L42-L55)
+2. **扩展自动点击**：找到帖子封面 → 点击打开 → 等待约 2 秒 → 关闭详情 → 点击下一条；当前这批处理完后，滚动加载更多帖子。[点击代码](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/chrome_extension/content.js#L96-L124)、[循环与滚动](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/chrome_extension/content.js#L176-L198)
+3. **人工导出 HAR**：网页加载帖子时会收到接口响应，在 Network 面板使用 “Save all as HAR with content”，把请求记录连同响应内容保存成文件。[导出说明](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/README.md#L59-L73)
+4. **Python 离线提取**：解析 HAR 中保存的响应 JSON，提取 `data.items[]` 中符合条件的 `note_card`，保存为 JSON 文件；内容可以包含标题、正文、作者、互动统计、图片地址等，实际字段取决于收到的响应。[解析代码](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/extract-content.py#L40-L126)
+
+**帖子详情的数据来源是网络响应里的 JSON。** 扩展负责触发浏览行为，HAR 保存响应，Python 负责整理数据。这个脚本没有另外下载图片、视频文件，也没有单独采集评论正文的实现；图片地址和评论数量只是笔记 JSON 中可能包含的字段。[完整解析脚本](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/extract-content.py)
+
+#### 它会点开哪些帖子？
+
+**范围由你点击“开始”时所在的标签页决定。** 扩展把启动消息发给这个标签页，然后在该页面中循环处理帖子卡片：[启动代码](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/chrome_extension/popup.js#L1-L17)
+
+- 寻找已经加载进页面、符合预设 HTML 结构的帖子封面。
+- 依次打开、等待、关闭，再处理下一条。
+- 当前这批处理完后，滚动到底部，尝试加载更多帖子。
+
+例如，你打开某个关键词的搜索结果页，它就尝试处理这个结果页逐步加载出来的帖子。收藏页、点赞页能否使用，要看页面结构是否匹配；仓库没有为这些页面分别做适配，不能直接认定支持。[卡片选择规则](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/chrome_extension/content.js#L54-L94)
+
+**它尝试逐条处理，但不能保证所有帖子都成功采齐。** 滚动后只等待约 1 秒，页面高度没有增加就停止，加载较慢时可能提前结束。代码还会在确认详情成功前把卡片记为“已点击”，因此点击计数也不能代表成功提取的帖子数。[滚动判断](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/chrome_extension/content.js#L39-L52)、[点击记录](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/chrome_extension/content.js#L96-L106)、[停止条件](https://github.com/leafiy/xhs_web_crawler/blob/8a7d1b6ec90d9c3d25f3d731cd83a15f8ab08c50/chrome_extension/content.js#L176-L198)
+
+## 固定版本与审查范围
 
 研究日期：2026-08-17（Pacific/Auckland）
 官方仓库：<https://github.com/leafiy/xhs_web_crawler>

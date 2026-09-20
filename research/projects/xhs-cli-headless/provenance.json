@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "project": "xhs-cli-headless",
+  "repository": "https://github.com/kyalpha313/xhs-cli-headless",
+  "cloneUrl": "https://github.com/kyalpha313/xhs-cli-headless.git",
+  "defaultBranch": "main",
+  "revision": "ffb70f4a9a5a137ef70b7cf14b770b75bb3d8589",
+  "treeRevision": "4889be175225fd5458e9d78db0983268b90bb5be",
+  "authoredAt": "2026-06-05T06:48:28+08:00",
+  "committedAt": "2026-06-05T06:48:28+08:00",
+  "capturedAt": "2026-09-13",
+  "checkout": {
+    "path": "source/",
+    "strategy": "HTTPS shallow partial clone; complete tracked checkout at detached HEAD",
+    "filter": "blob:none",
+    "depth": 1,
+    "tagsFetched": false,
+    "submodulesInitialized": false,
+    "detachedHead": true,
+    "ignoredByGit": true
+  },
+  "publishedPackage": {
+    "name": "xhs-cli-headless",
+    "version": "0.8.9",
+    "command": "xhs",
+    "entryPoint": "xhs_cli.cli:cli",
+    "sourceRevision": "bb74779dfdaaad02fdbc8c70dfe50544e8f09377",
+    "sourceTag": "v0.8.9",
+    "metadataUrl": "https://pypi.org/pypi/xhs-cli-headless/0.8.9/json",
+    "provenanceUrl": "https://pypi.org/project/xhs-cli-headless/0.8.9/#files",
+    "comparisonUrl": "https://github.com/kyalpha313/xhs-cli-headless/compare/bb74779dfdaaad02fdbc8c70dfe50544e8f09377...ffb70f4a9a5a137ef70b7cf14b770b75bb3d8589",
+    "revisionDifference": "The research HEAD adds one CI/release commit; the comparison changes no xhs_cli application files.",
+    "artifactsDownloaded": false,
+    "attestationCryptographicallyVerified": false
+  },
+  "upstreamFork": "https://github.com/jackwener/xiaohongshu-cli",
+  "relatedExporter": {
+    "repository": "https://github.com/DoYitNow/xhs-cli-export",
+    "revision": "6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83",
+    "evidenceAccess": "Public fixed-revision source and existing review; no local exporter checkout read",
+    "dependencyVersionPinned": false
+  },
+  "staticInventory": {
+    "trackedFiles": 75,
+    "trackedPythonFiles": 47,
+    "pythonAstParseErrors": 0,
+    "testFiles": 14,
+    "testFunctionDefinitions": 219,
+    "workflowFiles": 2,
+    "trackedFileBytes": 760648
+  },
+  "dependencyInventory": {
+    "pythonRequirement": ">=3.10",
+    "directRuntimeDependencies": 10,
+    "lockfilePackageRecords": 62,
+    "lockedSigningDependency": "xhshow==0.1.9",
+    "dependenciesInstalledOrExecuted": false
+  },
+  "licenseFiles": ["LICENSE", "NOTICE"],
+  "dependencyManifests": ["pyproject.toml", "uv.lock"],
+  "repositoryState": {
+    "trackedDirty": false,
+    "sourceModified": false,
+    "sourceExecuted": false
+  },
+  "notes": [
+    "The user explicitly requested this clone and source study. Only this new checkout's tracked research material was read.",
+    "No package installation, upstream test execution, browser launch, login, platform request or user credential access was performed.",
+    "Python syntax parsing is not a test run or proof of online compatibility."
+  ]
+}

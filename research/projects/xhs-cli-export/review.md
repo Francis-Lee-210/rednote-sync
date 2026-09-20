@@ -1,6 +1,35 @@
 # xhs-cli-export 专项源码审查
 
+GitHub：[DoYitNow/xhs-cli-export](https://github.com/DoYitNow/xhs-cli-export)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+> **2026-09-13 上游研究补充：** 已单独研究 [xhs-cli-headless](../xhs-cli-headless/review.md) 的固定提交 `ffb70f4a9a5a137ef70b7cf14b770b75bb3d8589`（声明版本 `0.8.9`）。它默认以 Python HTTP 完成扫码登录和数据读取，但没有注册本导出器依赖的 `favorites`／`likes` 命令，也不满足相应流式参数契约，不能按原样搭配完成收藏／点赞导出。搜索与单帖读取的基本命令仍存在，访问参数配对另有缺口，见[逐项兼容性对照](../xhs-cli-headless/review.md#与-xhs-cli-export-的固定版本兼容性)。下文保留原日期和范围的审查；本次没有检查用户实际安装的 `xhs` 或执行线上验证。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下依据固定版本 `6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83` 的公开源码作静态分析，未运行外部 CLI，未实测当前小红书兼容性。
+
+### 身份验证方式：把登录和 Cookie 管理交给外部 `xhs` 工具
+
+**可以把它理解成“导出助手”：先调用另一个工具取得小红书数据，再负责整理文件。** 安装说明推荐的外部工具是 `xhs-cli-headless`，实际执行哪个 `xhs` 程序由指定路径、环境变量或系统查找结果决定。[上游安装](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/install.sh#L32-L55)、[程序选择](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L121-L158)
+
+- **扫码登录由上游执行。** 导出器的 `login` 只是运行外部 `xhs login --qr-output ...`；它不自己生成登录请求、轮询扫码结果或保存 Cookie。README 将 Cookie 保存与恢复归给上游。登录失败后的“在浏览器验证、再导入字段”是提示用户操作，并未自动执行导入。[登录委托](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L1748-L1765)、[README 登录说明](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/README.md#L210-L217)
+- **登录检查也读取上游结果。** 独立的 `check` 命令在 headless 分支调用 `auth doctor --json`，读取 `authenticated`；兼容旧工具时先调用 `status`，再用 `whoami --json` 的退出码判断。它没有自己核对服务器返回的稳定账号 ID，也没有把检查通过设为导出的必经步骤。[检查实现](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L1711-L1745)、[导出入口](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L1556-L1597)
+
+**本仓没有固定上游版本，也没有自己的帖子接口签名实现。** 安装脚本不指定版本，运行时仅用版本输出特征区分工具分支。因此，上游怎样取得 Cookie、怎样签名、是否借助浏览器，都需要核对实际安装的上游版本；不能用另一个名字相近的项目代替这部分证据。[未固定的安装命令](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/install.sh#L43-L50)、[版本识别](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L201-L208)、[外部命令调用](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L172-L188)
+
+### 帖子详情获取方式：上游返回列表和详情，导出器下载图片并写 Markdown
+
+**处理范围由你选择的收藏、点赞、搜索关键词及数量参数决定。** 收藏／点赞主流程先调用上游的 `favorites` 或 `likes`，附带 `--stream --no-detail` 取得列表；搜索则按页调用 `search`。包装器读取这些命令输出的 JSON，不直接遍历用户当前浏览器页面。[来源参数](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L1792-L1804)、[收藏／点赞列表](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L1191-L1229)、[搜索调用](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L982-L1007)
+
+1. **逐帖补详情，仍交给上游。** 收藏／点赞分支在认为列表项尚未包含详情时，调用 `xhs read <帖子 ID> --json`；若列表中有 `xsec_token`，才附加传入。搜索分支则对每个有 ID 的选中项调用 `read`。上游返回 JSON 后，导出器整理字段；上游内部究竟请求接口、下载 HTML 还是操作浏览器，本仓没有实现。[收藏／点赞详情](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L1257-L1276)、[搜索详情](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L1440-L1462)
+2. **图片由导出器自己下载。** 它从返回数据中找图片地址，用 Python `requests.get` 请求文件；这一步使用网页风格的请求头，没有显式传入上游 Cookie。这里只实现图片保存，不能把“可搜索视频帖”理解成能下载视频或 Live Photo。[图片下载](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L528-L569)
+3. **逐条写出 Markdown 和相关 JSON。** 详情失败时会记录错误后继续导出，因此已有 Markdown 文件不代表正文和图片都已完整取得。[详情失败与逐条落盘](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L1274-L1312)
+
+**导出器可以由终端或后台任务启动，本身没有逐条点击帖子或导出 HAR 的步骤。** 是否需要已有浏览器、运行中是否弹出验证窗口，取决于外部 `xhs`；源码甚至保留了人工处理浏览器验证码的提示，不能仅凭包名中的 `headless` 保证整条链无需浏览器。[进程调用](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L172-L188)、[浏览器交互提示](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L947-L962)
+
+另需注意，`--input-json` 也不自动代表离线：收藏／点赞导入已有 JSON 时，默认仍可能调用上游补详情并下载图片；搜索分支则先走搜索流程。[输入分支](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L1579-L1600)、[补详情与图片请求](https://github.com/DoYitNow/xhs-cli-export/blob/6c9bcbd5ef2aa815ca07f0df83fcd15dd456ed83/src/xhs_export.py#L1628-L1659)
 
 状态：专项静态审查完成，独立复审通过
 审查日期：2026-08-13
@@ -137,7 +166,7 @@ xhs-cli-export 最有价值的是产品层的输出与中间结果设计：每�
 
 ## 8. 对 Rednote Sync 的参考价值
 
-对照 [`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md)：
+对照 [`sync-core.md`](../../../projects/docs/sync-core.md)：
 
 | 方面 | 当前判断 | 采用边界 |
 |---|---|---|

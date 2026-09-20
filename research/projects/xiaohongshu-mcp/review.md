@@ -1,6 +1,50 @@
 # xiaohongshu-mcp 专项源码审查
 
+GitHub：[xpzouying/xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下基于固定版本 `da9ba0365e176bc0eb11885f1941271d895feb73` 的 Go 主服务和配套登录工具做公开源码静态分析；未运行项目，未实测当前小红书兼容性。
+
+### 身份验证方式：浏览器登录后保存 Cookie，后续调用再加载
+
+身份来自浏览器中完成的网页登录。配套登录工具会打开有窗口的浏览器：已有登录就返回，否则等待用户登录，保存浏览器整组 Cookie（会话凭据），再复查页面登录标记。MCP 的 `get_login_qrcode` 则提取网页二维码，保留浏览器最多等待四分钟，检测到登录后保存 Cookie。[配套登录工具](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/cmd/login/main.go#L16-L81) [二维码等待与保存](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/service.go#L136-L201)
+
+后续服务调用会新建浏览器，并从 Cookie 文件恢复会话材料；不是要求你一直保留日常浏览器的某个页面。文件位置可由 `COOKIES_PATH` 指定，支持旧版 Cookie 数组及新版会话文件。主服务默认无头模式，可以在后台运行，但仍需要真实浏览器进程；配套登录工具的可见窗口与此是两个入口。[加载 Cookie](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/browser/browser.go#L89-L100) [文件格式](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/cookies/cookies.go#L48-L63) [文件位置](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/cookies/cookies.go#L127-L147) [按调用创建浏览器](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/service.go#L368-L439) [主服务默认模式](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/main.go#L15-L33)
+
+`check_login_status` 通过浏览器进入首页，检查用户区元素是否存在；它还会读取页面中的用户 ID／昵称，但读取失败只记警告，仍可返回“已登录”。因此，它没有证明登录账号与用户预选账号一致。这个检查是独立工具，详情调用前也没有自动执行它。[页面登录判据](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/login.go#L20-L70) [状态返回](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/service.go#L104-L133) [详情入口](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/service.go#L419-L439)
+
+### 帖子详情获取方式：直接打开指定网址，读取正在运行的页面数据
+
+帖子由调用方选择。常用的发现工具包括：
+
+| 工具 | 返回哪一批帖子 |
+| --- | --- |
+| `list_feeds` | 浏览器首页当前加载的推荐列表。 |
+| `search_feeds` | 指定关键词、筛选条件下当前加载的搜索结果。 |
+| `user_profile`／`get_my_profile` | 指定用户／当前账号主页中所选的笔记、收藏或点赞标签。 |
+
+这些工具读取页面当前的一批状态，不自动滚动遍历全部帖子，也不逐条补详情。后续读取哪些帖子、读多少条，需要调用方再安排 `get_feed_detail`；主页标签能否显示数据仍取决于页面实际可访问情况。[首页列表](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/feeds.go#L17-L65) [搜索列表](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/search.go#L96-L165) [用户主页](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/user_profile.go#L52-L137) [当前账号主页](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/user_profile.go#L148-L194)
+
+`get_feed_detail` 要求非空的 `feed_id` 和 `xsec_token`，通常从同一列表条目配对取得；缺 token 会直接报错，不会只凭 ID 自动补出。程序用这两个参数拼帖子网址，来源参数固定为 `pc_feed`。[参数要求](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/mcp_handlers.go#L350-L372) [列表材料约定](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/mcp_server.go#L56-L64) [网址构造](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/feed_detail.go#L1003-L1005)
+
+```text
+调用方指定帖子 ID + token
+    ↓
+新建浏览器并加载 Cookie
+    ↓
+直接导航帖子网址，等待页面加载
+    ↓
+读取页面 __INITIAL_STATE__ 中对应 ID 的帖子和评论
+    ↓
+返回详情数据
+```
+
+这条链通过 Rod 控制浏览器读取运行中的页面对象，按请求 ID 精确取项，缺少该项就报错。它不从列表逐篇点击封面，也不下载 HTML 后做文本解析，不需要 HAR；Go 服务在这条路径中也没有另行计算接口签名或直接调用详情 HTTP API。[页面导航与读取](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/feed_detail.go#L98-L144) [页面状态提取](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/feed_detail.go#L944-L1000)
+
+详情中的滚动和“展开更多回复”属于可选评论加载：打开 `load_all_comments` 后才进入这段流程，并受评论数量等配置限制；名字里的“all”不保证收齐全部评论。[评论开关](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/feed_detail.go#L128-L143) [评论配置](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/feed_detail.go#L39-L81) [滚动与展开](https://github.com/xpzouying/xiaohongshu-mcp/blob/da9ba0365e176bc0eb11885f1941271d895feb73/xiaohongshu/feed_detail.go#L178-L228)
 
 状态：专项静态审查完成；独立复审通过
 审查日期：2026-08-13

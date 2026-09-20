@@ -1,6 +1,40 @@
 # Playwright MCP 专项源码审查
 
+GitHub：[microsoft/playwright-mcp](https://github.com/microsoft/playwright-mcp)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下基于固定版本 `7e0457a7cbf88823bf0146d12c46ae12c6818247` 的公开源码与文档静态分析；未运行项目，未实测当前小红书兼容性。
+
+它把浏览器操作变成供 AI 或其他客户端调用的 MCP 工具。本仓库的入口只转交给 `playwright-core`，依赖固定为 `1.63.0-alpha-2026-08-05`；核心实现不在这个仓库。所以下面的模式和工具能力依据固定 README／配置声明，不代表已逐行核验该 alpha 包，也未用其他 Playwright 版本补齐它的实现。[项目定位](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md#L1-L7) [包装入口](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/index.js#L18-L19) [CLI 委托](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/cli.js#L18-L32) [固定依赖](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/package.json#L39-L46)
+
+### 身份验证方式：提供浏览器会话的保存与复用，网站登录由调用方安排
+
+固定 README 说明以下会话来源：
+
+| 模式 | 登录状态从哪里来 |
+| --- | --- |
+| 持久 profile（README 所述默认） | 在工具启动的浏览器中登录，状态保存在浏览器数据目录，后续会话继续使用。 |
+| `isolated`＋`storage-state` | 使用临时会话，可从状态文件加载 Cookie 和 local storage；关闭浏览器后本次状态不再保留。 |
+| CDP／扩展 | 连接现有浏览器，复用其中的登录状态；CDP 需要调试端点，扩展模式需要运行中的 Chrome／Edge 和相应扩展。 |
+
+这里的 profile 是浏览器存储环境，不是平台账号 ID。[持久与隔离模式](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md#L458-L507) [状态文件内容](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md#L511-L515) [CDP 配置](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/config.d.ts#L69-L82) [扩展要求](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/config.d.ts#L105-L110)
+
+这些能力负责保留或加载会话材料，没有现成的小红书扫码流程、个人信息探针或预期账号比对。调用方仍需安排网页登录，并检查网站是否接受该会话、当前账号是否正确；MCP 服务连接成功也不能代替小红书身份验证。这是通用浏览器工具与网站业务流程的分工。[通用浏览器定位](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md#L1-L11) [服务连接配置](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/config.d.ts#L112-L128)
+
+按固定 CLI 文档，工具自己启动浏览器时默认显示窗口，可用 `--headless` 在后台运行，仍有浏览器进程；这种模式不要求你先手动打开日常浏览器。选择 CDP／扩展时，则需要对应的现有浏览器。[浏览器模式参数](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md#L414-L428)
+
+### 帖子详情获取方式：提供导航、页面读取与网络查看工具，采集流程需要自行编排
+
+它没有“获取小红书某篇帖子”的专用工具。按固定工具文档，调用方可以选择以下通用能力：
+
+- **读取页面：** `browser_navigate` 打开指定网址；`browser_snapshot` 返回页面的无障碍结构；`browser_evaluate` 执行调用方编写的页面 JavaScript，可用来读取页面元素或页面对象。选择器、帖子字段和等待条件需要自行确定。[导航](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md#L985-L990) [页面快照](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md#L1064-L1072) [页面脚本](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md#L925-L933)
+- **查看网络：** `browser_network_requests` 只列请求编号；`browser_network_request` 才按编号查看单项 headers／body，文档说明结果可返回文本或保存文件。这不等于已自动取得、识别并解析帖子详情 JSON；所需响应内容在精确依赖中的可读行为，本轮没有展开核验。[网络工具声明](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md#L1002-L1020)
+- **编写 Playwright 流程：** 文档还有 `browser_run_code_unsafe`，在服务进程执行调用方提供、接收 `page` 对象的代码。它是执行代码的通用入口，网站流程仍需自行编写。[代码工具声明](https://github.com/microsoft/playwright-mcp/blob/7e0457a7cbf88823bf0146d12c46ae12c6818247/README.md#L1043-L1049)
+
+因此，帖子清单、是否点击封面、如何翻页、读取多少条和保存哪些字段，都由调用方决定；工具不会自动处理当前页面的所有帖子。按上述文档能力，可以设计“打开指定页面→读取页面或网络数据→保存结果”的流程，无须把 HAR 作为必经步骤。小红书需要的登录材料、帖子 token、接口签名及详情解析规则，也不是这些通用工具内置提供的能力。
 
 状态：专项静态审查完成；独立复审通过
 审查日期：2026-08-13
@@ -161,7 +195,7 @@ MCP Client
 - 不注册`browser_run_code_unsafe`、evaluate、upload/drop、cookie/storage、raw network body、route、init script、extension、shared context或任意navigate给生产Agent。
 - 不把固定Read-only标记或相邻实现的`readOnlyHint`等同无本地写/无secret/无平台副作用；每个tool显式列能力与审批要求。
 - 不连接用户日常浏览器；专用profile、单账号互斥、ExpectedAccountId及每轮/恢复后的身份验证。
-- 不用MCP session、profile或session transcript接管[`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md)中的SQLite canonical state、cursor、task/failure和逐资产receipt。
+- 不用MCP session、profile或session transcript接管[`sync-core.md`](../../../projects/docs/sync-core.md)中的SQLite canonical state、cursor、task/failure和逐资产receipt。
 - CAPTCHA、AUTH变化、429、安全限制、cursor/schema drift立即全局暂停并保存checkpoint，等待人工显式恢复；不自动换profile/代理/账号继续。
 
 ### 9.3 阶段边界

@@ -1,6 +1,45 @@
 # ReaJason/xhs 专项源码审查
 
+GitHub：[ReaJason/xhs](https://github.com/ReaJason/xhs)
+
 > 状态：**研究证据**。本文只对记录的固定 revision 和审查范围负责；评级、排除项、历史实施阶段边界和账号限制不自动成为当前产品决策。
+
+## 先读这里：身份验证与帖子详情获取
+
+补充日期：2026-09-12。以下用通俗语言解释本文固定版本中、文档主推的使用流程；本次未进行线上验证。
+
+### 身份验证方式：主要复用已有账号的 Cookie
+
+可以把这部分理解为三个步骤：
+
+1. **你提供登录状态。** 将已有账号的 Cookie 交给项目，程序在访问小红书时携带它，以此沿用这个账号的登录状态。Cookie 可以先理解成浏览器保存的登录状态材料。[客户端初始化与 Cookie 设置](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/core.py#L93-L126)
+2. **程序为请求准备签名。** 普通笔记接口还需要一份针对本次请求的校验信息。调用方提供签名函数，作者的示例使用浏览器辅助生成这份“签名”；文档里的签名服务就是负责这项工作的辅助程序。**Cookie 与请求签名是两种不同的材料。** [请求签名调用](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/core.py#L135-L149)、[浏览器签名服务示例](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs-api/app.py#L14-L72)
+3. **登录是否有效，需要另外检查。** 把 Cookie 填进去时，项目不会自动确认它是否过期、当前到底是哪个账号。调用方可以再请求“当前用户资料”，检查返回的账号和登录状态。[用户资料方法](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/core.py#L338-L344)
+
+### 帖子详情获取方式：Python 直接请求接口或网页
+
+代码提供两条详情获取路径，由调用方选择：
+
+| 路径 | 实际怎么做 |
+|---|---|
+| **请求详情接口** | Python 向小红书发送“获取这篇帖子”的请求，成功响应后取出笔记数据，例如标题、正文、作者和图片地址。该方法调用 `/api/sns/web/v1/feed` 并提取 `note_card`。[接口路径](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/core.py#L206-L222) |
+| **请求帖子网页** | Python 下载这篇帖子的网页源码，从网页内嵌的初始数据 `window.__INITIAL_STATE__` 中提取详情。[网页路径](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/core.py#L224-L264) |
+
+两条路径都要求提供**帖子编号 `note_id` 和对应的访问参数 `xsec_token`**，还会使用来源参数 `xsec_source`。这里的 `xsec_token` 属于具体帖子的访问材料；它与账号 Cookie、请求签名分别承担不同作用。两种详情方法的参数定义见上表源码链接。
+
+```text
+账号层面：已有 Cookie → 沿用登录状态 → 另行检查当前用户资料
+
+帖子层面：指定帖子及访问参数
+             ↓
+       Python 请求接口或网页
+             ↓
+          提取帖子详情
+```
+
+这两条详情获取路径都不依赖逐篇模拟点击或 HAR。浏览器在作者的接口调用示例中主要负责辅助生成签名，Python 负责发送详情请求；网页方法则直接下载并解析网页源码。以上是源码机制，当前小红书上的实际可用性尚未实测。
+
+## 审查信息
 
 状态：专项静态审查完成；独立复审通过
 审查日期：2026-08-13
@@ -107,7 +146,7 @@ Rednote Sync 只能把 `image_list` 顺序视为 ordinal 候选；URL 是短期 
 
 - `[源码事实]` 笔记遍历只对两个特定内容错误跳过，其余详情失败中断；被跳过对象没有 failure/task记录，异常后只能从空 cursor重新开始。[core.py](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/core.py#L456-L502)
 - `[源码事实]` 媒体下载直接写最终文件；分片上传也只把 upload ID/parts 留在内存，没有持久 resume manifest、abort/cleanup 或 checkpoint。[下载](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/help.py#L142-L152) [上传](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/core.py#L830-L895)
-- `[适配判断]` 本项目不能接管 [`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md) 已有的 SQLite progress、task/failure、逐资产状态和原子提交。Provider只返回一次一页的 transient 结果，Core继续独占 cursor、checkpoint和 canonical state。
+- `[适配判断]` 本项目不能接管 [`sync-core.md`](../../../projects/docs/sync-core.md) 已有的 SQLite progress、task/failure、逐资产状态和原子提交。Provider只返回一次一页的 transient 结果，Core继续独占 cursor、checkpoint和 canonical state。
 
 ## 6. 会话、Cookie、签名、错误与风控停止边界
 
@@ -190,7 +229,7 @@ Rednote Sync 未来只注册精确的 `listPage/getDetail/getMediaDescriptor`；
 
 ### 9.3 阶段边界
 
-- **历史实施 Stage 3：不改变。** 继续遵循 [`sync-core.md`](../../../projects/rednote-sync-core/docs/sync-core.md) 的完全离线边界；本仓库、浏览器、Cookie、签名、endpoint和网络均不进入 Core。
+- **历史实施 Stage 3：不改变。** 继续遵循 [`sync-core.md`](../../../projects/docs/sync-core.md) 的完全离线边界；本仓库、浏览器、Cookie、签名、endpoint和网络均不进入 Core。
 - **历史实施 Stage 4：另立授权与验收门。** 所有 endpoint、token、cursor、排序和媒体字段必须在明确授权下低频、脱敏验证；仍不得把浏览器/stealth/延迟/代理当作平台许可或账号安全证明。
 
 ## 10. 采用分级与排除项
@@ -233,3 +272,13 @@ Rednote Sync 未来只注册精确的 `listPage/getDetail/getMediaDescriptor`；
 - 会话、API与安全复审：**PASS**；默认标识、两套签名服务、Cookie/secret、URL/路径/上传、平台写、验证码与停止边界全部闭环，P0–P2 为 0。
 - 依赖、CI、许可证与 Rednote适配复审：**PASS**；依赖/lock、测试/CI、Action pin、Docker/远端脚本、sdist条件性扩散、MIT和B/D阶段边界通过，P0–P3 为 0。
 - 完成门：固定源码仍为 detached HEAD，revision/tree与来源一致，tracked工作树 clean；报告未复制任何tracked高熵fixture值，没有凭据或真实平台请求记录。
+
+## 12. 2026-09-12：SDK 搜索实测前预检
+
+状态：**研究证据**。本次只核对上述固定提交，核心文件一致、源码工作树 clean；未执行上游代码或线上请求，不改变既有评级。
+
+`get_self_info2()` 调用身份接口；`get_note_by_keyword()` 默认 `page=1`、`page_size=20`、`sort="general"`、`note_type=0`，每次新建 `search_id`，请求体共六字段。[身份](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/core.py#L342-L344) [搜索](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/core.py#L408-L440)
+
+适配建议：保留 SDK 业务方法及实际 POST 字节，桥接现有本地 signer；由受控 transport 限次、禁重试与重定向并先处理停止信号。Cookie 解析会截断含等号的值、补固定标识；SDK 对空或非 JSON 响应先返回，不能单独承担停止门。[调用链](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/core.py#L135-L204) [Cookie](https://github.com/ReaJason/xhs/blob/f4b62d9f8e4078e631fc6e4ec8e430bc711ee9f0/xhs/help.py#L386-L409) [本地 signer](../../reverse/targets/xhs-xsec-token/experiment/scripts/protocol_session.py)
+
+后续在线证据（18:56–18:57 NZST）：用户授权后，以测试 F 实际执行本 SDK 的身份及搜索方法，接入当前本地 signer 与有界 HTTPX。身份 HTTP 200 / API 0、既有摘要匹配；原生六字段搜索仍 HTTP 461，验证相关响应头存在，立即停止，未请求详情或重试。此结果不代表作者浏览器签名方案或默认传输已验证，也不改变既有静态评级；完整范围、135 项离线测试及脱敏证据见[搜索对照](../../reverse/targets/xhs-xsec-token/experiment/protocol-method.md#2026-09-12-reajasonxhs-搜索对照)。
