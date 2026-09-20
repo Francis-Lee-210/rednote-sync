@@ -89,12 +89,17 @@ class CDNTransportTests(unittest.TestCase):
 
     def test_default_trusted_tls_context_and_certificate_failure_are_preserved(self):
         handler = transport.CDNHTTPSHandler()
-        self.assertEqual(handler._context.verify_mode, ssl.CERT_REQUIRED)
-        self.assertTrue(handler._context.check_hostname)
         request = urllib.request.Request('https://' + HOST + '/private?signature=synthetic')
         with patch.object(handler, 'do_open') as opened:
             handler.https_open(request)
         opened.assert_called_once_with(transport.CDNHTTPSConnection, request, context=handler._context)
+        # Python 3.9 creates the default context in HTTPSConnection, whereas
+        # newer urllib versions create it in HTTPSHandler. Check the effective
+        # connection configuration without connecting or relying on that timing.
+        connection_type = opened.call_args.args[0]
+        default_connection = connection_type(HOST, **opened.call_args.kwargs)
+        self.assertEqual(default_connection._context.verify_mode, ssl.CERT_REQUIRED)
+        self.assertTrue(default_connection._context.check_hostname)
         context = Mock(); context.wrap_socket.side_effect = ssl.SSLCertVerificationError('certificate mismatch')
         connection = transport.CDNHTTPSConnection(HOST, context=context)
         with patch.object(transport.socket, 'create_connection', return_value=Mock()), \
