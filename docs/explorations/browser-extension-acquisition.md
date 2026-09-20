@@ -126,7 +126,7 @@ RedCaChe 的 `unreviewed/keep/remove_from_xhs/evergreen/archived` 人工视图�
 1. 统一现有点赞/收藏 userscript 的版本化 JSON 输出，并实现 `offline-input-v1` 桥接。
 2. 用合成页面实现 MV3 壳层：popup、service worker、durable job store、content script 消息校验和 Core batch ack；不访问真实平台。
 3. 用离线数据实现本地 review 视图，验证分类、搜索、保留/归档和 Obsidian projection。
-4. 另立历史实施 Stage 4 授权和规格后，才以小样本验证列表发现、详情 fallback、身份绑定和停止条件。
+4. 按执行时已确认的采集范围、身份与停止条件，以小样本验证列表发现、详情 fallback 和身份绑定。此切片对应当前产品阶段二，不要求重新走完旧的历史实施 Stage 4 流程；已有授权按其适用范围执行。
 5. 平台写操作继续留在独立决策之后，不随读取扩展一起实现。
 
 验收时，扩展重启、service worker 终止、页面导航失败、部分批次已被 Core 接收以及账号不匹配都必须能够确定性恢复或安全停止。

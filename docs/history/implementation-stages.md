@@ -12,6 +12,6 @@
 | 历史实施 Stage 3 | 根据逆向结果实现离线同步 Core | 已实现 SQLite canonical state、对象存储、状态机、失败恢复和派生输出 |
 | 历史实施 Stage 4 | 以后实现浏览器扩展和在线采集 | 只形成研究与探索，没有完成真实在线实现 |
 
-历史实施 Stage 3 的实现契约仍然有效，见 [Core 规格](../../projects/rednote-sync-core/docs/sync-core.md)。历史实施 Stage 1 和历史实施 Stage 2 的证据保存在[逆向报告](../../research/reverse/README.md)。
+Core 在 2026-09-12 完成本地重构，现行行为见 [Core 规格](../../projects/docs/sync-core.md)；历史实施 Stage 3 的原始约束保留在 [重构前快照](../../projects/docs/history/sync-core-before-2026-09-12.md)，不能用它覆盖当前契约。历史实施 Stage 1 和历史实施 Stage 2 的证据保存在[逆向报告](../../research/reverse/README.md)。
 
 当前产品也使用“三阶段”描述功能，但含义是列表导出、内容下载、本地整理与后续操作；两套编号不能互换。

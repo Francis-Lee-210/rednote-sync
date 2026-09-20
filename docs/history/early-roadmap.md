@@ -7,7 +7,7 @@
 
 ## 文档定位
 
-这份文档保存当时的项目需求、历史思路、候选路线和未解决问题，不是当前实现的技术规格。文中的 历史实施 Stage 1–4 均指[历史实施阶段](implementation-stages.md)；已实现契约以 [Core README](../../projects/rednote-sync-core/README.md) 与 [Core 实现规格](../../projects/rednote-sync-core/docs/sync-core.md) 为准。
+这份文档保存当时的项目需求、历史思路、候选路线和未解决问题，不是当前实现的技术规格。文中的 历史实施 Stage 1–4 均指[历史实施阶段](implementation-stages.md)；已实现契约以 [Core README](../../projects/README.md) 与 [Core 实现规格](../../projects/docs/sync-core.md) 为准。
 
 同一个问题可能同时存在两条或多条互相竞争、甚至彼此冲突的思路。这些内容可以并列保留，之后再通过调研、实验和风险评估逐步排除或合并。候选工具的当前证据和采用结论统一记录在[研究总表](../../research/catalog.md)，不再以本文件中的早期印象为准。
 

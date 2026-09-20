@@ -7,7 +7,7 @@
 - [资源清单](resources.md)：一手项目材料和外部学习资料。
 - [`lessons/`](lessons/)：按编号阅读的短课。
 - [`records/`](records/)：从讨论和实践中沉淀的结论。
-- [`reference/`](reference/)：分类流程与项目状态速查页。
+- [`reference/`](reference/)：分类流程与历史项目状态速查页；[2026-08-18 状态快照](reference/rednote-project-status.html)保留当时记录。
 - `assets/`：课程页面共用的样式和交互脚本。
 
-学习材料可以解释设计，但产品决策应回写到 `docs/`，实现契约应回写到对应项目。页面中的“当前状态”如果与[产品路线图](../docs/design/roadmap.md)冲突，以路线图为准。
+学习材料解释概念与历史。状态快照按标注日期保留，不随项目进展更新；当前进度统一见[产品路线图](../docs/design/roadmap.md)。产品决策应回写到 `docs/`，实现契约应回写到对应项目。

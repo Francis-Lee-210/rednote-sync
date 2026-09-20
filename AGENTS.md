@@ -3,9 +3,10 @@
 ## Start here
 
 - Preserve unrelated and uncommitted work. Never reset, discard, or silently replace existing changes.
+- Start with [docs/README.md](docs/README.md) for authority and [docs/design/roadmap.md](docs/design/roadmap.md) for current status. Use [HANDOFF.md](HANDOFF.md) to choose task-specific reading.
 - Before editing anything under `docs/`, read `docs/AGENTS.md` completely.
 - Before editing anything under `research/`, read `research/AGENTS.md` completely.
-- Use [docs/README.md](docs/README.md) as the authority map. Do not infer product decisions from research, learning material, history, or implementation details.
+- Scope searches to the relevant directories and honor [`.gitignore`](.gitignore) and [`.rgignore`](.rgignore). Read Core specifications, research, history, explorations, and learning material only when the task needs them.
 
 ## Documentation rules
 

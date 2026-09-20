@@ -14,7 +14,7 @@ These rules apply to everything under `docs/` and supplement the repository-leve
 
 - Put stable purpose in `mission.md`, confirmed product behavior in `design/product-design.md`, and current status or open questions in `design/roadmap.md`.
 - Put unconfirmed proposals in `explorations/`, dated superseded material in `history/`, and accepted documentation-structure decisions in `decisions/`.
-- Keep project-specific runtime and protocol truth under the corresponding `projects/<name>/docs/` directory.
+- Keep Core runtime and protocol truth under `projects/docs/`; `projects/` is the current single-package root.
 - Use the terms defined in `glossary.md`. Distinguish current product stages from historical implementation stages every time both could be confused.
 
 ## Change discipline

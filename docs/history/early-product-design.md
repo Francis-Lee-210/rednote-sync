@@ -10,7 +10,7 @@
 
 这份文档形成于正式 Core 实现之前，保留了早期产品路线和验收设想。截至 2026-08-17，历史实施 Stage 3 离线同步核心已经完成，14 个候选仓库和 1 个 Playwright 路线专题的静态研究也已结束，但真实小红书接入、通用输入转换和 AI 分类流水线仍未完成。2026-08-16 用户提出的“三阶段构想与三条路线”仍作为需求草案保留；`xhs_web_crawler` 与 RedCaChe 的后续研究已经补充了浏览器扩展、长任务恢复和本地整理方面的设计证据，但没有验证账号路线风险或真实网站兼容性。
 
-已落地的数据、状态机、输出和安全契约以 [Core 实现规格](../../projects/rednote-sync-core/docs/sync-core.md) 为准。浏览器侧候选结构现归档为[浏览器扩展采集探索](../explorations/browser-extension-acquisition.md)。
+已落地的数据、状态机、输出和安全契约以 [Core 实现规格](../../projects/docs/sync-core.md) 为准。浏览器侧候选结构现归档为[浏览器扩展采集探索](../explorations/browser-extension-acquisition.md)。
 
 ## 背景
 
@@ -277,7 +277,7 @@ XHS-Downloader V2.8 Beta
 
 ## 本地知识库目录结构
 
-下面是早期建议结构，用于表达产品希望提供的可读文件。当前 Core 的实际路径使用 account/note digest，并以 SQLite 与不可变对象为事实源，详见 [Core README](../../projects/rednote-sync-core/README.md#理解输出)。
+下面是早期建议结构，用于表达产品希望提供的可读文件。当前 Core 的实际路径使用 account/note digest，并以 SQLite 与不可变对象为事实源，详见 [Core README](../../projects/README.md#理解输出)。
 
 ```text
 rednote-knowledge/

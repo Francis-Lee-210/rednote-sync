@@ -4,9 +4,9 @@
 
 ## Knowledge
 
-- [本地：Rednote Sync Core README](../projects/rednote-sync-core/README.md)
+- [本地：Rednote Sync Core README](../projects/README.md)
   当前实现能力、支持矩阵、离线命令和历史实施 Stage 4 边界。用于判断“现在能运行什么”。
-- [本地：历史实施 Stage 3 实现规格](../projects/rednote-sync-core/docs/sync-core.md)
+- [本地：Core 当前契约](../projects/docs/sync-core.md)
   3A、3B、3C 的契约、测试证据和在线待验证事实。用于判断“为什么离线完成仍不等于真实账号同步”。
 - [本地：Obsidian 客户端逆向报告](../research/reverse/targets/rednote2obsidian/report.md)
   当前 Obsidian 样本的接口、签名、分页、数据模型和 Markdown 规则。用于追溯历史实施 Stage 1 结论。

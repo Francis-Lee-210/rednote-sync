@@ -1,11 +1,29 @@
 .DS_Store
 **/.DS_Store
 .local/
+/资料库/
 **/node_modules/
 *.tgz
 **/.venv/
 **/__pycache__/
 *.py[cod]
+
+# Local settings and credentials; keep deliberately synthetic examples visible.
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+**/storage-state.json
+**/storage_state.json
+*.har
+
+# Loose local captures; keep structured project fixtures visible
+/*.har
+/session*.jsonl
 
 # Local prototype credentials
 /prototypes/test-cookie.txt
@@ -17,3 +35,11 @@
 /research/reverse/outputs/
 /research/reverse/targets/*/samples/
 /research/reverse/targets/*/web-snapshots/
+
+# xsec-token discovery experiment: local runtime data and browser profiles
+/research/reverse/targets/xhs-xsec-token/experiment/data/
+/research/reverse/targets/xhs-xsec-token/experiment/profiles/
+/research/reverse/targets/xhs-xsec-token/experiment/config/notes.yaml
+/research/reverse/targets/xhs-xsec-token/experiment/config/accounts.json
+/research/reverse/targets/xhs-xsec-token/experiment/**/*.har
+/research/reverse/targets/xhs-xsec-token/experiment/**/*.jsonl
