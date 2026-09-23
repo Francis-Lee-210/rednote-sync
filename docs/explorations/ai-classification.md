@@ -1,14 +1,14 @@
-# 小红书本地知识库：AI 内容理解与分类模型选型
+# 小红书本地知识库：内容理解与分类方案
 
-更新日期：2026-09-19（初稿：2026-08-10）
+更新日期：2026-09-23（初稿：2026-08-10）
 
-状态：**探索**。统一记录帖子处理需求、候选模型、官方及中转价格、套餐与评测方案；尚未确定产品选型，也未进行真实帖子的付费模型评测。
+状态：**探索**。记录帖子处理需求、所需能力、分层处理与评测方案；尚未确定产品选型，也未进行真实帖子的付费模型评测。
 
-本文合并前期讨论与2026-09-19研究，以本次研究替换旧型号推荐和报价。研究已核对公开来源及本地规范化索引，没有上传帖子、购买套餐或调用付费模型；本次文档合并没有重新抓取价格或统计资料库。价格与字段统计均为该次核查快照，不能视为实际账单或效果排名。
+按用户要求删除旧的具体模型研究后，2026-09-23重新核查公开的一手资料，扩展至国内外通用多模态、开源托管、OCR/ASR及视频专用服务。本地统计也重新读取当前索引。价格与接口能力是资料核查结果，中文帖子理解质量仍待实测；本轮没有上传帖子、调用付费模型或购买套餐。
 
 相关背景：[项目使命](../mission.md)、[产品设计](../design/product-design.md)、[文档地图](../README.md)、[分类流程学习材料](../../learning/reference/ai-classification-pipeline.html)。
 
-导航：[处理需求](#requirements) · [本地字段](#local-data) · [帖子与能力](#post-types) · [分层处理](#routing) · [视频理解](#video) · [官方模型与价格](#official-pricing) · [中转与托管](#relay-pricing) · [套餐](#plans) · [成本算例](#cost) · [评测](#evaluation)
+导航：[处理需求](#requirements) · [本地字段](#local-data) · [帖子与能力](#post-types) · [分层处理](#routing) · [视频理解](#video) · [成本口径](#cost) · [评测](#evaluation) · [新一轮选型](#model-survey) · [官方报价](#official-prices) · [托管与中转](#hosted-prices) · [套餐](#plans)
 
 <a id="requirements"></a>
 
@@ -79,29 +79,29 @@
 
 ## 2. 实际导出字段与媒体覆盖
 
-依据2026-09-19逐行解析 `资料库/索引/笔记.jsonl` 的汇总；按真实 LF 分行，未输出帖子正文、作者或访问参数。格式定义见 [note-library](../../prototypes/note-library/README.md)。
+依据2026-09-23逐行解析 `资料库/索引/笔记.jsonl` 的汇总；按真实 LF 分行，未输出帖子正文、作者或访问参数。这里只代表当前索引，不是历次导出累计量。格式定义见 [note-library](../../prototypes/note-library/README.md)。
 
-| 项目 | 2026-09-19读取结果 | 对处理方案的影响 |
+| 项目 | 2026-09-23读取结果 | 对处理方案的影响 |
 |---|---:|---|
-| 总记录 | 2,494 | 包括 1 条详情不可用记录，不等于全部内容均可处理 |
-| 来源帖子类型 | normal 1,729；video 749；unknown 16 | 有现成粗粒度类型，不需模型再次判断 |
-| 图片文件 | 8,496 | 需要保留顺序；最多一帖 24 张 |
-| 视频文件 | 939，分布于 797 帖 | 其中 192 个 ID 以 `-motion` 结尾，为动态照片附件 |
-| 音频附件 | 231，分布于 231 帖 | 227 个原声、4 个背景音乐；独立音频不是所有视频音轨的总数 |
-| 字幕附件 | 635，分布于 212 帖 | 有多语或不同字幕版本，不能解释为 635 个视频已有转写 |
-| 只有图片的媒体组合 | 1,677 帖 | 可走一次图文处理 |
-| 无媒体附件 | 17 帖 | 是导出结果的缺口/来源状态，不推翻平台帖子至少有图的前提 |
-| 正文为空 | 19 帖 | 不可仅按正文归类；其中有来源空内容和未取得详情等不同情况 |
-| 正文字符数 | 中位 272；P90 965；最大 1,920 | 字符数不是 token 数，主要变量可能是视觉、音频与生成长度 |
-| 来源标签非空 | 1,651 帖 | 可作为弱线索，不能替代模型理解或人工标准答案 |
+| 总记录 | 1,832 | available 1,829；empty_in_source 3；当前无 detail_unavailable 记录 |
+| 来源帖子类型 | normal 1,264；video 568 | 有现成粗粒度类型，不需模型再次判断 |
+| 图片文件 | 6,388 | 需要保留顺序；最多一帖 24 张 |
+| 视频文件 | 763，分布于 618 帖 | 其中 197 个 ID 以 `-motion` 结尾，为动态照片附件 |
+| 音频附件 | 234，分布于 234 帖 | 230 个原声、4 个背景音乐；独立音频不是所有视频音轨的总数 |
+| 字幕附件 | 644，分布于 215 帖 | 有多语或不同字幕版本，不能解释为 644 个视频已有转写 |
+| 只有图片的媒体组合 | 1,210 帖 | 可走一次图文处理 |
+| 无媒体附件 | 0 帖 | media_status 均为 complete；不等于每帖语义信息都充分 |
+| 正文为空 | 13 帖 | 不可仅按正文归类；来源空内容与正文为空不是同一统计 |
+| 正文字符数 | 中位 275；P90 973；最大 1,920 | 字符数不是 token 数，主要变量可能是视觉、音频与生成长度 |
+| 来源标签非空 | 1,057 帖 | 可作为弱线索，不能替代模型理解或人工标准答案 |
 
 实际顶层字段包括 `note_id`、`title`、`type`、`body_text`、`body_markdown`、`source_tags`、`author`、`relations`、`sources`、`variants`、`content_status`、`media_status` 和 `media`。媒体含 `kind/path/status/bytes/sha256/verification`，字幕另有语言和角色信息，音频有原声/BGM 角色。
 
 需要注意三个边界：
 
-1. 50 篇 `normal` 帖子实际上带视频；两篇 `video` 没有视频文件。路由应读取 `media[].kind` 与可用状态，不能只信 `type`。
+1. 52 篇 `normal` 帖子实际上带视频；两篇 `video` 没有视频文件。另有一帖仅有视频附件；导出文件组合不等于平台展示形式。路由应读取 `media[].kind` 与可用状态，不能只信 `type`。
 2. 这份索引没有 `ocr/transcript/summary/topics/embedding/image_role` 字段；不代表其他目录一定没有加工产物，但不能把这些能力当作本索引已提供。
-3. 939 个视频中，只有 424 个的现有 `verification.probe` 记有时长；已知部分合计 1,176.23 分钟。其余缺时长不是时长为零，因此本轮不报全库视频推理总价。独立音频与视频可能重合，也不能把两种时长相加当作净处理量。
+3. 763 个视频中，只有 435 个的现有 `verification.probe` 记有时长；已知部分合计 1,198.73 分钟。其余 328 个缺时长不是时长为零，因此本轮不报全库视频推理总价。独立音频与视频可能重合，也不能把两种时长相加当作净处理量。
 
 <a id="post-types"></a>
 
@@ -143,7 +143,7 @@
 }
 ```
 
-2026-09-19的研究进一步比较其额外开销：
+比较额外开销时，需要注意：
 
 “先调用模型分类，再调用模型整理”确实可能比一次整理更贵。应区分两种分类：
 
@@ -168,223 +168,13 @@ token 数和费用也不同：便宜模型多读一些 token，可能仍比贵�
 
 例如 60 秒、30 FPS 的视频有 1,800 帧。按 1 FPS 输入只有约 60 帧，按 2 FPS 约 120 帧；这只是未遇帧数上限的简单计算，不是所有厂商的固定策略。0.2 秒闪现的文字或快速动作可能被跳过。
 
-**官方接口证据：**
-
-- [Qwen 视觉文档](https://www.alibabacloud.com/help/en/model-studio/vision)说明 `fps` 控制抽帧频率，`max_frames` 可限制帧数，超过时再均匀采样；该视觉接口不理解视频音轨。因此“支持视频输入”不等于“支持声音”。
-- [Gemini 视频文档](https://ai.google.dev/gemini-api/docs/video-understanding)的静态方式默认 1 FPS，可设置抽帧频率和片段。其示例计数为低分辨率 66 token/帧、其他分辨率 258 token/帧，音频 32 token/秒，另有时间等元数据；一分钟约 6,000 或 18,000 输入 token 是量级估计，实际按返回 usage 和模型/模态费率结算。部分新版还有动态查看时间线的 agentic 模式，可能减少长视频输入，但增加导航推理和首字等待；宣传中的最高节约比例不能直接用于本库预算。
-- [DeepSeek 视觉 API](https://api-docs.deepseek.com/guides/vision/)确认 `deepseek-flash` 支持图片，本轮没有据此确认其直接视频和音轨输入。可以自行提供带时间戳的抽帧与转写，但这是应用侧组合，不能写成官方原生音视频支持。
+选择处理接口时，需要分别确认画面采样、时间信息和音轨支持。“支持视频输入”不必然表示理解音轨；自行组合抽帧与转写，也不等同于原生音画理解。采样频率、帧数上限、分辨率与动态补看片段都会影响信息覆盖、费用和延迟，应在实际评测中记录。
 
 对本库，视频需要按“问题”选择采样：讲课/口播重字幕和少量画面；操作教程重步骤变化；舞蹈、运动、剪辑节奏需要更密的时序信息；审美/氛围还要听音轨。不能用同一低 FPS 声称覆盖所有需求，也不应仅因静音视觉路线便宜就用于音乐情绪分类。
 
-<a id="official-pricing"></a>
-
-## 6. 官方模型能力、价格与限制
-
-以下均为每百万 Token；输入为未命中缓存的标准输入，输出包含收费的推理 Token。人民币与美元分表，不用未核实汇率混算。媒体 Token 数在不同模型间不同，相同视频不能只按输入单价比较。额度、活动、地域与正式账单仍需区分。
-
-| 模型 | 官方服务/计价档 | 输入 CNY | 输出 CNY | 候选用途 |
-|---|---|---:|---:|---|
-| Qwen3.7 Flash | 百炼北京，单请求 ≤32K | 0.2 | 0.8 | 廉价图文与静音视频理解基线 |
-| Qwen3.8 Flash | 百炼北京，≤1M | 0.8 | 2.7 | 较新图文/视频通用候选 |
-| Qwen3.8 Omni Flash | 百炼北京，统一输入价格 | 0.8 | 2.7 | 有声视频、口播和声音语义优先候选 |
-| Qwen3.7 Plus | 百炼北京，≤256K，原价 | 2 | 8 | 复杂视觉/跨图理解升级候选 |
-| Qwen3.5 OCR | 百炼北京 | 0.5 | 2 | 密集截图/表格的独立提取候选 |
-| Qwen3 VL Flash | 百炼北京，≤32K | 0.15 | 1.5 | 旧视觉专用对照，未必优于3.7 Flash |
-| Doubao Seed2.0 Lite 260428 | 火山方舟常规，≤32K | 非音频0.6；音频9 | 3.6 | 图文/视频/声音统一理解对照 |
-| Doubao Seed2.0 Mini 260428 | 火山方舟常规，≤32K | 非音频0.2；音频3 | 2 | 更便宜的全模态候选，需验证信息遗漏 |
-
-价格依据：[百炼官方价格](https://help.aliyun.com/zh/model-studio/model-pricing)。3.7 Flash 的后两档为输入/输出 ¥0.6/2.4（32K–256K）、¥1.2/4.8（256K–1M），全请求按所属档计费。其北京条目明确 Batch 半价。3.7 Plus 显示限时八折，不能把活动价当永久价。Omni 缓存输入 ¥0.1。新加坡3.7 Flash短档 ¥0.225/0.974，3.8 Flash及Omni ¥1.094/3.427。
-
-| 模型 | 官方服务/计价档 | 输入 USD | 输出 USD | 候选用途 |
-|---|---|---:|---:|---|
-| DeepSeek V4.1 Flash (`deepseek-flash`) | 官方 API，非高峰 | 0.15 | 0.60 | 中文图文结构化理解的重要新对照 |
-| 同上 | 官方 API，高峰 | 0.30 | 1.20 | 同一模型，按调用时段变价 |
-| Gemini 3.1 Flash-Lite | Developer API，标准 | 0.25；音频0.50 | 1.50 | 低成本原生音视频国际基线 |
-| Gemini 3.5 Flash-Lite | Developer API，标准 | 0.30，包含音频 | 2.50 | 新一代低成本全模态对照 |
-| Gemini 3.8 Flash | Developer API，2026年底前标准活动价 | 0.75 | 3.75 | 复杂音视频升级对照 |
-| GPT-5.6 Luna | OpenAI API，≤272K输入 | 0.20 | 1.20 | 图文结构化输出国际低价基线 |
-
-DeepSeek依据：[官方定价](https://api-docs.deepseek.com/quick_start/pricing/?push_animated=1&show_loading=0&theme=light&webview_progress_bar=1)。高峰为周一至周五 UTC 01:00–04:00、06:00–10:00，其余时段半价。缓存输入高峰/低峰 $0.006/0.003。定价页明确 V4 Pro 继续提供，但不支持视觉。谷歌依据：[官方定价](https://ai.google.dev/gemini-api/docs/pricing)。上表三款列有半价 Batch；3.8 Flash于2027-01-01标准价变为 $1.50/7.50。免费层与付费层的数据使用政策不同。
-
-OpenAI价格与模态依据：[GPT-5.6 Luna模型页](https://developers.openai.com/api/docs/models/gpt-5.6-luna)支持文本与图片输入、结构化输出，不支持音频/视频输入。缓存输入 $0.02；超过272K输入时全请求输入价2倍、输出价1.5倍；缓存写入价1.25倍。[Batch](https://developers.openai.com/api/docs/guides/batch)提供50%折扣，24小时内完成。视频需自行抽帧并结合转写，不能把该组合与原生音视频的输入Tokens直接等同。
-
-### 能力证据与限制
-
-#### DeepSeek：用户提及的新视觉能力属实
-
-[官方更新日志](https://api-docs.deepseek.com/updates/)确认2026-09-10发布 V4.1 Flash，原生多模态视觉理解。正式调用名为 `deepseek-flash`；旧的 `deepseek-v4-flash` 与 `deepseek-v4-flash-vision-exp` 已退役并临时转到新Flash，不能当三个独立模型比较。
-
-[视觉接口](https://api-docs.deepseek.com/guides/vision/)展示图像输入；当前证据确认文本+图像、JSON输出、1M上下文，不据“多模态”一词推断原生音频或视频文件输入。视频路线可以自行抽帧并附时间戳，声音另行转写，但这是组合方案。
-
-#### Qwen：便宜视觉与便宜全模态已经需要重新比较
-
-[视觉模型文档](https://help.aliyun.com/zh/model-studio/vision-model)列出3.7 Flash、3.8 Flash、3.7 Plus均支持图像、最长2小时/2GB视频与结构化输出；视觉模型的视频理解不自动包括声音。OCR专用款适合提取，不应把提取准确率等同帖子归类准确率。
-
-[Qwen3.8 Omni Flash模型页](https://help.aliyun.com/zh/model-studio/qwen3-8-omni-flash)明确支持文字、图片、音频、视频输入与文字输出，1M上下文，113种语言和方言，缓存与思考强度调节。因此旧的“千问统一只做视觉、豆包处理音频”的分工已不是唯一合理方案。需测它与Seed Lite在口播、BGM、环境声上的成本和信息保留。
-
-[Batch API文档](https://help.aliyun.com/zh/model-studio/openai-compatible-batch-chat)列有Qwen3.8 Flash支持，但价格页其条目未标Batch半价；调用前应核对当期价格/控制台，不能仅据其他型号自动推断。Qwen3.8 Omni Flash不在本次读取的Batch清单中，不预设支持。
-
-#### Gemini：新款不必然比旧款便宜
-
-[3.1 Flash-Lite官方模型页](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite)确认文本、图像、视频、音频、PDF输入，文字输出，结构化输出与Batch。新3.5 Flash-Lite音频输入价更低，但输出价更高；图文摘要短输出与口播长音频的最优选择可能不同。3.8 Flash仅作为复杂案例对照，不能用其较新版本号替代真实集评估。
-
-#### 豆包：Lite与Mini必须区分音频价及版本
-
-2026-09-19通过浏览器读取[火山方舟官方动态价格表](https://docs.volcengine.com/docs/ark/model-pricing?lang=zh)，补全了此前网页提取器未返回的表格。以下为在线常规服务，单位人民币/百万Token；缓存存储另按 ¥0.017/百万Token/小时计。
-
-| 模型 | 输入长度 | 非音频输入 | 音频输入 | 非音频缓存命中 | 音频缓存命中 | 输出 |
-|---|---|---:|---:|---:|---:|---:|
-| Seed2.0 Lite | ≤32K | 0.6 | 9 | 0.12 | 1.8 | 3.6 |
-| Seed2.0 Lite | (32K,128K] | 0.9 | 13.5 | 0.18 | 2.7 | 5.4 |
-| Seed2.0 Lite | (128K,256K] | 1.8 | 27 | 0.36 | 5.4 | 10.8 |
-| Seed2.0 Mini | ≤32K | 0.2 | 3 | 0.04 | 0.6 | 2 |
-| Seed2.0 Mini | (32K,128K] | 0.4 | 6 | 0.08 | 1.2 | 4 |
-| Seed2.0 Mini | (128K,256K] | 0.8 | 12 | 0.16 | 2.4 | 8 |
-
-同页“批量推理”表明确：上述Lite/Mini各档非缓存输入及输出均为常规价格一半，缓存命中价不变。例如Lite ≤32K Batch为非音频¥0.3、音频¥4.5、输出¥1.8；Mini为¥0.1/1.5/1.0。在线低优也列出相同的非缓存输入/输出单价；低优只支持隐式缓存，不产生缓存存储费用。不能把Batch与低优折扣再相乘。
-
-[官方2026功能发布记录](https://www.volcengine.com/docs/6492/2165228?lang=en)的5月28日条目列出 `doubao-seed-2-0-mini-260428` 与 `doubao-seed-2-0-lite-260428`，6月9日明确Mini/Lite仅260428版本支持音频理解；调用时应固定版本，不能看到Seed2.0家族名称就把旧版当作支持声音。[Seed2官方介绍](https://seed.bytedance.com/en/seed2)也说明4月底Lite升级统一文字、图片、视频、音频理解。
-
-因此比较千问Omni与豆包时，不能只取豆包“¥0.6起”当有声视频统一输入价。反过来，音频单价相差也不能直接当每分钟或每帖成本倍数：不同厂商的音频/视频Token生成数量及采样策略不同，需固定同一视频记录实际usage和总账单。
-
-同一官方价表另核实Seed2.1 Turbo ≤256K常规输入/输出¥3/15，Batch ¥1.5/7.5；Pro ≤1M常规¥6/30，Batch ¥3/15。这两行音频输入列为“-”，不能由版本更新推断直接音频输入；本轮不据此替代已确认的260428音频模型。
-
-### 仍值得纳入，但本次价格证据不完整的候选
-
-| 候选 | 已证实 | 价格核查状态 |
-|---|---|---|
-| Kimi K2.6 / K3 | 官方指南确认图像/视频能力；K2.6可关闭思考，K3始终思考且有严格JSON Schema | 官方价格页可打开但价格表没有返回；不使用第三方转述补成“已核实官方价” |
-
-来源：[Seed2官方介绍](https://seed.bytedance.com/en/seed2)、[豆包官方产品](https://www.volcengine.com/product/doubao/)、[Ark产品](https://www.volcengine.com/product/ark)、[Ark价格入口](https://www.volcengine.com/docs/82379/1544106)、[Kimi K2.6指南](https://platform.kimi.ai/docs/guide/kimi-k2-6-quickstart)、[Kimi K3指南](https://platform.kimi.ai/docs/guide/kimi-k3-quickstart)、[Kimi官方价格入口](https://platform.kimi.ai/docs/pricing/chat)。
-
-GLM多模态型号亦值得备选，但本次未取得足够可读的官方新价/新型号证据，不列出猜测价。Seedance是视频生成家族，不是本任务要买的视频理解接口。
-
-### MiniMax-M3 与独立转写费用
-
-作为按量对照，**`MiniMax-M3` Standard** 输入 ≤512K 时为 **$0.30 输入／$1.20 输出／$0.06 缓存读，每百万 tokens**；输入 >512K 为 $0.60／$2.40／$0.12。Priority 为 Standard 的 1.5 倍。另一条图像理解路径 `API-vlm` MCP 为 **$0.01/次**，也可抵扣 Token Plan，不能与 M3 原生图像输入当成同一计费路径；这项 MCP 价格于 2026-07-22 调整。来源：[MiniMax PAYG 一手价表](https://platform.minimax.io/docs/guides/pricing-paygo)。
-
-若选择“先转写、再看画面”，`qwen3-asr-flash-filetrans` 北京官方报价为 ¥0.00022/音频秒，即 ¥0.0132/分钟、¥0.792/小时，输出不另收费；新加坡为 ¥0.00026/秒。应加上后续图文理解费用，不能把 ASR 单价当视频总价。已有212帖提供字幕，应先检查覆盖与质量，避免重复转写。[官方 ASR 价格](https://help.aliyun.com/zh/model-studio/model-pricing)
-
-<a id="relay-pricing"></a>
-
-## 7. 中转、聚合与开源托管价格
-
-本次比较OpenRouter、AIHubMix、302.AI和SiliconFlow的公开一手报价，未注册、充值或进行媒体请求实测。不同平台同名模型可能使用不同上游、区域或版本；以下是可核查的平台样本，不是所有中转站的穷尽列表。
-
-### 平台定位与收费边界
-
-| 平台 | 本次比较的服务 | 已核实收费方式 | 对自动处理帖子的意义 |
-| --- | --- | --- | --- |
-| OpenRouter | 多供应商 API 聚合／路由 | 美元用量计费；Standard 平台费 5.5%，Business 8%；推理单价按上游传递 | 适合脚本调用。另有 Batch，但当前仅文本；图像、音频、视频须同步 API |
-| SiliconFlow 中国站 | 开源模型托管推理，不等同于模型原厂 API 转售 | 人民币／百万 tokens；不同于其国际站价格 | 可脚本调用视觉模型；限流、具体账号额度和本次所选模型的 Batch 折扣未核实 |
-| AIHubMix | 多上游 API 聚合／自动回退 | 模型页美元报价，可列出具体上游与分层价格 | 有 API 示例；自动批处理的订阅套餐权益未核实，不能把网页聊天套餐当 API 配额 |
-| 302.AI | API 聚合、工具与统一钱包 | 预充值、按用量／次数扣费；价格页声明 1 PTC = 1 USD，余额永久有效 | 可脚本调用；本次未核实可用于无人值守批量处理的包月套餐及独立 Batch 折扣 |
-
-来源：[OpenRouter 价格](https://openrouter.ai/pricing)、[OpenRouter FAQ](https://openrouter.ai/docs/faq)、[SiliconFlow 价格](https://siliconflow.cn/pricing)、[SiliconFlow 多模态接口](https://docs.siliconflow.cn/docs/userguide/capabilities/multimodal-vision)、[AIHubMix 模型目录](https://aihubmix.com/models)、[302 价格页](https://price.302.ai/pricing_website/?region=cn)、[302 入门与钱包说明](https://help.302.ai/docs/302-AI-wu-fen-zhong-shang-shou-jiao-cheng)。
-
-OpenRouter 的 BYOK 规则已经变化：Standard／Business 每月按目录推理价值计算的 25,000 美元免 BYOK 服务费，超额部分收 5%；它并不免除模型上游推理费用。不要继续引用旧的“每月一百万请求免费”规则。[当前政策](https://openrouter.ai/pricing)
-
-AIHubMix 旧文档搜索摘要中的支付／积分条款已跳转至新版条款。本次不把旧摘要的“12 个月过期”等内容作为当前确认事实；支付兑换率、手续费和余额期限仍需下单页确认。[当前条款](https://aihubmix.com/legal/terms)
-
-### 同模型跨平台报价
-
-除 SiliconFlow 小节外均为 **USD／百万 tokens**，输入指未命中缓存的基础输入；多媒体如何转成 tokens 仍按相应模型及接口规则。以下不含充值、税费、汇兑和重试成本。
-
-| 模型与平台 API ID | 平台／上游 | 输入 | 输出 | 缓存读 | 条件与来源 |
-| --- | --- | ---: | ---: | ---: | --- |
-| `qwen/qwen3.7-flash` | OpenRouter／Alibaba Cloud Int. | 0.03 | 0.13 | 0.006 | 页面基础报价；显式 5 分钟缓存另列读 0.003、写 0.038；[模型页](https://openrouter.ai/qwen/qwen3.7-flash) |
-| `qwen3.7-flash` | AIHubMix／Alibaba Cloud | 0.0282 | 0.1128 | 0.0056 | 输入 ≤32K；32K–256K 为 0.0845／0.338，256K–1000K 为 0.169／0.676；[模型页](https://aihubmix.com/model/qwen3.7-flash) |
-| `qwen/qwen3.8-flash` | OpenRouter／Alibaba Cloud Int. | 0.15 | 0.47 | 0.016 | 基础报价；缓存写 0.20；[模型页](https://openrouter.ai/qwen/qwen3.8-flash) |
-| `deepseek/deepseek-v4.1-flash` | OpenRouter | 0.15 / 0.30 | 0.60 / 1.20 | 0.003 / 0.006 | 离峰／高峰，模型目录有 UTC 日期与时段 overrides；[目录 API](https://openrouter.ai/api/v1/models) |
-| `deepseek-v4.1-flash` | AIHubMix／DeepSeek 或 Bytedance | 0.155 / 0.3098 | 0.62 / 1.2392 | 0.0031 / 0.0062 | 离峰／高峰；高峰 UTC 01–04、06–10；[模型及路由](https://aihubmix.com/model/deepseek-v4.1-flash) |
-| 同上，页面上游 ID `alicloud-deepseek-v4.1-flash` | AIHubMix／Alibaba Cloud | 0.1408 / 0.2816 | 0.5632 / 1.1264 | 0.0141 / 0.0282 | 离峰 UTC 14–24，高峰 00–14；与 DeepSeek 路由窗口、缓存价不同；[路由表](https://aihubmix.com/model/deepseek-v4.1-flash) |
-| 页面型号 V4.1 Flash，价表调用名 `deepseek-chat` | 302.AI | 0.15 / 0.30 | 0.60 / 1.20 | 0.003 / 0.006 | 高峰 UTC 01–04、06–10；页面没有同等清晰的周末例外说明；调用别名和视觉参数须再核实；[产品价表](https://302.ai/product/detail/deepseek-v4.1-flash) |
-| `openai/gpt-5.6-luna` | OpenRouter | 0.20 | 1.20 | 0.02 | 输入 >272K 后 0.40／1.80；[目录 API](https://openrouter.ai/api/v1/models) |
-| `gpt-5.6-luna` | AIHubMix／OpenAI 或 Azure | 0.20 | 1.20 | 0.02 | 输入 ≤272K；更长为 0.40／1.80；[模型页](https://aihubmix.com/model/gpt-5.6-luna) |
-| `google/gemini-3.5-flash-lite` | OpenRouter／Google AI Studio 或 Vertex | 0.30 | 2.50 | 0.03 | Flex 路由另列 0.15／1.25，不用于 Standard routing；[模型页](https://openrouter.ai/google/gemini-3.5-flash-lite) |
-| `gemini-3.6-flash` | AIHubMix／VertexAI 或 Google AI Studio | 0.75 | 3.75 | 0.075 | 正文价格表；视频／音频输入也列 0.75，缓存存储 1 美元／百万 tokens／小时；[模型页](https://aihubmix.com/model/gemini-3.6-flash) |
-
-这里的模型页“支持视觉／视频”是平台声明，未进行实际媒体请求验证。OpenRouter Qwen3.7 Flash 明确接受文本、图片和视频，但只声明 JSON 输出、没有 JSON Schema 强制约束；不能把 JSON mode 当作严格 schema。AIHubMix 的 Qwen3.7 页说明误写为 Plus、最大输出字段前后也不一致；其价格可记为该站报价，能力细节需以原厂文档及实测为准。Gemini3.6 页标题仍显示旧的 1.5／7.5，与正文 0.75／3.75 不同，本表采用正文并保留这一差异。来源见相应行。
-
-OpenRouter V4.1 Flash 目录明确区分周末与工作日：周末离峰价，工作日 UTC 01–04、06–10 为高峰，其余离峰。不要将这一规则自动套到其他站点；例如 AIHubMix 的阿里路由离峰窗口不同。[目录 API](https://openrouter.ai/api/v1/models)
-
-### SiliconFlow 中国站：开源托管候选
-
-单位为 **人民币／百万 tokens**；价格不是美元，也不是 Qwen 商业 Flash API 的同款价格。
-
-| 精确 ID | 输入 | 输出 | 条件／能力证据 |
-| --- | ---: | ---: | --- |
-| `Qwen/Qwen3.5-35B-A3B` | 0.40 | 3.20 | 输入 <128K；≥128K 为 1.60／12.80；原生视觉模型候选 |
-| `Qwen/Qwen3.5-27B` | 0.60 | 4.80 | 输入 <128K；≥128K 为 1.80／14.40 |
-| `Qwen/Qwen3.5-122B-A10B` | 0.80 | 6.40 | 输入 <128K；≥128K 为 2.00／16.00 |
-| `Qwen/Qwen3.6-35B-A3B` | 1.80 | 10.80 | 定价页当前值；模型目录抓取还出现 1.60／12.80，不假定两者相同 |
-| `Qwen/Qwen3.8-27B` | 3.00 | 12.00 | 较新视觉模型候选；部署端视频参数与质量待实测 |
-| `zai-org/GLM-4.5V` | 1.00 | 6.00 | 视觉专用候选 |
-
-来源：[中国站价格](https://siliconflow.cn/pricing)、[中国站模型目录](https://www.siliconflow.cn/models)、[视觉模型说明](https://www.siliconflow.com/models/vision)。未给人民币价格强行按固定汇率转换；国际站单价不是中国站人民币报价的简单换汇。
-
-视觉内容会计入 tokens。SiliconFlow 视频接口公布 `fps` 与 `max_frames`，帧数为 `min(fps × 时长, max_frames)`；视频输入能力仍按具体模型区分，不能因平台接受 `video_url` 就推定所有模型理解音轨。[多模态文档](https://docs.siliconflow.cn/docs/userguide/capabilities/multimodal-vision)
-
-<a id="plans"></a>
-
-## 8. Token Plan、Coding Plan、Agent Plan 与 Batch
-
-百炼[个人版](https://help.aliyun.com/zh/model-studio/token-plan-personal-overview)当前月价限时¥39/139/499，原价¥60/180/600；每7天额度2500/10000/40000 Credits，不能将Credits直接当Tokens。仅允许兼容工具内交互使用，禁止自动化脚本、自定义后端和非交互批处理；个人版输入输出可用于服务改进与模型优化。
-
-百炼[团队版](https://help.aliyun.com/zh/model-studio/token-plan-team-overview)“订阅前须知”也明确仅限兼容AI编程/智能体工具中的交互使用，禁止自动化脚本或应用后端；团队版不使用对话数据训练模型。不能因名称从Coding Plan升级到Token Plan或有API Key就推断可跑无人值守全量帖子任务。
-
-本项目按量API/正式Batch是清晰可比基线。厂商订阅是否允许实际任务，应逐项核对具体计划条款；交互式分析少量帖子与脚本循环跑全库是不同使用方式。缓存、Batch、峰谷和订阅不能当作自动叠加的折扣。
-
-OpenRouter Batch 已提供异步 24 小时处理和通常 50% token 折扣，但**当前只接受文本**，明确拒绝图像、音频、视频与文件内容块。可用于已经提取为文本的后续整理，不能直接给整批多模态帖子打五折。是否有该模型的 Batch 路由仍应查对应目录条目。[Batch 文档](https://openrouter.ai/docs/batch-quickstart)
-
-四个平台公开 API 均面向程序化使用。厂商套餐则需要逐家判断，不能将所有 Coding／Token Plan 都视为禁止自动化，也不能将套餐月费视为不限用途的 API 余额。
-
-### 厂商订阅套餐补充核查
-
-| 厂商／套餐 | 当前核实的费用或额度 | 视觉与多模态权益 | 对本项目自动化整理的判断 |
-| --- | --- | --- | --- |
-| MiniMax Token Plan 国际站 | 文档价 Plus **$22/月**、Max **$55/月**、Ultra **$132/月**；5 小时滚动＋每周配额；营销订阅页仍列 $20／$50／$120，页面间冲突未解决 | 原 Coding Plan 扩展为共享多模态额度；包含 M3／M2.7／图像／语音，M3 原生图像与视频输入。Subscription Key 与按量 API Key 不通用 | **值得纳入个人多模态工作流候选**，不是仅代码文本套餐；官方称面向个人交互开发，对超高并发自动批任务动态限流，并建议生产使用 PAYG；未取得任意无人值守批处理不受限的承诺 |
-| 智谱 GLM Coding Plan | 月费在本次公开抓取中未核实；Lite／Pro／Max 每 5 小时积分 2,000／12,000／28,000，每周 10,000／60,000／140,000；工作日 UTC+8 14–18 时外按半额积分消耗 | 官方包括图像视频理解 MCP；GLM-5.3-Flash（含视觉 MCP）使用相同积分系数。旧模型别名自动升级，不能视为固定模型版本 | **只在指定工具／产品环境享受额度**；支持 OpenClaw 但次级调度。自己写通用帖子脚本不在已确认覆盖范围；经支持的 Agent 处理仍需遵守其使用范围与配额 |
-| Kimi 会员／Kimi Code | 会员页 Andante **¥49/月**、Moderato **¥99/月**、Allegretto **¥199/月**、Allegro **¥699/月**；Code 另有 5 小时和 7 天限制，并与会员池联动 | 本次权益页不足以核实 Coding endpoint 的原生图像／视频接口；不能把网页或开放平台视觉能力直接移植到套餐 endpoint | Code 权益用于个人开发，允许真实标识的第三方开发工具；通用后台批处理覆盖未确认。官方已预告会员与 Code 权益将拆分，订阅中用户不受影响，不能当作已经完成拆分 |
-| 火山方舟 Coding Plan／Agent Plan | 活动页均显示**限时 ¥9.9 起**，未登录页各档正常价为“价格查询中”，不记录为常规月费。Agent Small 每月 20,000 燃料值，Medium／Large／Max 为 5／12.5／25 倍 | Agent Plan 明确有视觉、向量化、ASR 等模型／能力，支持 DeepSeek V4.1 Flash；不要将 Seedance 视频生成当作视频理解 | **Agent Plan 已超出纯编程定位**，宣传办公、内容、研究 Agent，支持 OpenClaw/Hermes；但本次未取得完整 API 调用限制、视觉输入契约与抵扣系数，不能确认任意独立批脚本均适用 |
-
-来源：[MiniMax 当前套餐价格文档](https://platform.minimax.io/docs/guides/pricing-token-plan)、[MiniMax 概览](https://platform.minimax.io/docs/token-plan/intro)、[MiniMax 订阅页及流量 FAQ](https://platform.minimax.io/subscribe/token-plan)；[GLM 套餐与新积分规则](https://docs.bigmodel.cn/cn/coding-plan/overview)、[GLM 使用须知](https://docs.bigmodel.cn/cn/coding-plan/usage-notes)；[Kimi 会员价格](https://www.kimi.com/help/membership/membership-overview)、[Kimi Code 权益及拆分预告](https://www.kimi.com/help/kimi-code/benefits)、[Kimi Code 与开放平台区别](https://www.kimi.ai/zh-hans/help/kimi-code/faq)；[火山 Coding Plan](https://www.volcengine.com/activity/codingplan)、[火山 Agent Plan](https://www.volcengine.com/activity/agentplan)。
-
-MiniMax 广告中的十几亿 tokens 是特定使用结构下的估算，不能直接换算成每月可处理多少张图片。其当前文档按各 endpoint 价格消耗共享用量，Credits 为 1,000 点 = $1、365 天有效、按 PAYG 目录价扣减；超额 Credits 与包月权益应分别算成本。营销页和文档月费差异也不能自行解释为税费。[积分定价](https://platform.minimax.io/docs/guides/pricing-token-plan)
-
-MiniMax 的上述自动批任务限制来自**流量／公平使用 FAQ 的动态限流说明**，不是本次查到的“一切自动化均禁止”条款。当前 $22／$55／$132 文档覆盖 M3、M2.7、图像和语音等合资格资源，但明确不含 MiniMax H3、声音设计、快速克隆等少数模型；原生视觉输入与图片生成／语音生成共用额度不意味着它们的计量相同。火山 Agent Plan 是否允许自建脚本全库运行、燃料值如何对应本任务 tokens，仍是未核实项，不据营销定位直接推荐购买。[MiniMax 概览](https://platform.minimax.io/docs/token-plan/intro)、[流量 FAQ](https://platform.minimax.io/subscribe/token-plan)、[火山 Agent Plan](https://www.volcengine.com/activity/agentplan)
-
-因此，本项目有两条待测方案：一次性清理归档时比较按量／异步 Batch 的实际成功帖成本；持续个人 Agent 工作流可额外测试 MiniMax Token Plan 或火山 Agent Plan 的可用额度与实际限流。**套餐资格、模态接口和有效成本是三个独立问题**，其中一个成立不能替代另外两个。
-
-实际比较应固定版本、上游、区域、峰谷时段与媒体参数，再记录：
-
-`成功帖成本 = (实际输入费 + 输出及思考费 + 缓存写读/存储费 + 重试费 + 平台/支付费) ÷ 成功且通过质量检查的帖子数`
-
-“每百万 tokens 更便宜”不能直接推出“每篇帖子更便宜”：不同视觉 tokenizer、抽帧数量、推理长度与失败率都会改变分母和计费量。对于本项目，优先将 Qwen3.7 Flash、Qwen3.8 Flash、DeepSeek V4.1 Flash 纳入同一批图文样本；声音重要的视频还需独立的原生音视频候选。这个建议是研究判断，尚未做效果测试或选定服务商。
-
-若只是一次处理当前两千多篇，先用按量小样估成本再与月费比较；若每天持续用Agent读资料、整理和检索，再评估包月共享额度。已有订阅且任务在权益范围内时，还应比较剩余额度的边际成本，而不是重复计入整个月费。
-
 <a id="cost"></a>
 
-## 9. 成本算例与计费口径
-
-假设 **1,000 篇，每篇计费输入 4,000 token、计费输出 500 token**，无重试、无缓存，所有单次请求均落低档：
-
-| 路线 | 这组假设计费量的费用 |
-|---|---:|
-| Qwen3.7 Flash 北京标准 | ¥1.20 |
-| Qwen3.7 Flash 北京 Batch（符合接口条件） | ¥0.60 |
-| Qwen3.8 Omni Flash 北京标准 | ¥4.55 |
-| Seed2.0 Lite / Mini，全部按非音频输入计 | ¥4.20 / ¥1.80 |
-| DeepSeek V4.1 Flash 离峰 / 高峰 | $0.90 / $1.80 |
-| GPT-5.6 Luna 标准 | $1.40 |
-| Gemini 3.1 Flash-Lite，全部按非音频输入计 | $1.75 |
-| OpenRouter Qwen3.7 Flash | $0.185 模型费，另计平台费 |
-| AIHubMix Qwen3.7 Flash 短档 | $0.1692 模型费，未核实支付附加费 |
-
-这些只是 `4 × 输入单价 + 0.5 × 输出单价` 的算术对比。不能承诺同一千篇真实帖子只需这些费用：图片/音频/视频 token 不同，隐藏思考也可能使输出超出500。本库全视频时长尚不完整，故不以此表乘2.494伪装全库报价。
-
-### 实际成本口径
+## 6. 成本评估口径
 
 先统一成每百万输入/输出 token，并分别列币种、地域和长度档。费用公式为：
 
@@ -392,27 +182,171 @@ MiniMax 的上述自动批任务限制来自**流量／公平使用 FAQ 的动�
 
 上式各 token 项需除以一百万；若厂商按秒、图片张数或 credit 计费，则分别换算，不能硬套。缓存写入、批量折扣和峰谷折扣仅在供应商明确支持时计入；不同模型对同一张图片的 token 数可能不同，所以同一“每百万单价”不代表同一帖费用。
 
-第三方还要比较充值实付、可用余额、平台服务费、供应商路由、失败重试和是否能传完整媒体。展示的“美元余额”不必然与充值人民币按实时汇率等值。这里只采用可公开核查的标准价，不把未验证的充值折扣算作确定优惠。
-
-模型与平台的具体数值见本文官方与中转价格章节；没有公开价的单元格保留未核实，不用旧模型或同名网页聊天套餐补齐。
+第三方还要比较充值实付、可用余额、平台服务费、供应商路由、失败重试和是否能传完整媒体。展示的“美元余额”不必然与充值人民币按实时汇率等值。评估时应采用可核查的报价，不把未验证的充值折扣算作确定优惠。
 
 <a id="evaluation"></a>
 
-## 10. 真实帖子评测与候选选择
-
-我的研究建议是：**Qwen3.7 Flash 作普通图文的成本基线；Qwen3.8 Omni Flash 作有声视频的成本基线；DeepSeek V4.1 Flash 作图文效果对照；Seed Lite/Mini 260428 与 Gemini 作音画效果对照。** MiniMax-M3及其Token Plan适合进一步比较持续个人Agent工作流。首轮不必接入全部模型，更不必为每个题材建立一条模型链。若希望先用一家，千问目前同时有低价视觉和全模态候选；这只是接入简化的优势，不是已证明理解效果最佳。
+## 7. 真实帖子评测
 
 先做 60–100 篇人工分层小样，不必先给全库运行一个分类模型。程序按已有 `type`、媒体数量、字幕有无、正文长度取样，再人工补足截图/教程/审美/音画依赖等类型。推荐至少比较：统一便宜多模态一次处理、字段分流后一次处理、首次完成后少量升级；如仍考虑独立路由器，再加为第四组。
 
 用同一组任务与人工参考标签检查：重要信息遗漏、图中文字/数字准确性、音画证据、JSON 有效性、每帖实际账单、重试/升级比例和延迟。不同模型应比较可比的输入覆盖，不是只对齐名义 token 数。做低价路线的随机复核，才能发现它没有主动报告的遗漏。
 
-本轮完成的是公开能力和价格研究、索引字段验证与候选处理方案；未完成模型质量排名、全库视频时长统计或付费小样测试。
+目前保留了索引字段核查与候选处理方案；尚未完成模型质量比较、全库视频时长统计或付费小样测试。
 
 除上述指标外，保留原讨论中的逐维度Macro-F1、`unknown/needs_new_tag`召回率及审美类人工满意度。固定标签定义、正反例、输出Schema及媒体覆盖范围；不能把厂商排行榜替代个人收藏的实际验收。
 
-## 11. 尚未核实的事项
+<a id="model-survey"></a>
 
-- 302.AI V4.1 Flash 的视觉请求契约及 `deepseek-chat` 别名是否固定；本次产品页只足以确认报价。
-- 每个平台实际充值汇率、税费、支付处理费、当前账号限流；不能仅靠“美元余额”推导人民币支出。
-- AIHubMix 与 SiliconFlow 页面的元信息／价格差异；付款前应以同一模型同一账户的调用账单小样确认。
-- 视频与图像的实测质量、延迟、重试率及完整账单；本次没有上传本地资料。
+## 8. 2026-09-23重新选型：先选能力路线，不先选厂商
+
+本轮重新读取官方模型、接口和价格资料，不以已删除研究为依据。覆盖通用多模态、开放权重托管、文档识别、语音转写和视频专用服务。以下“候选”表示值得小样验证，不表示已证明优于其他模型；没有以编程榜单推断中文收藏帖效果。
+
+| 路线 | 适用帖子 | 新一轮重点对照 | 不应承担的任务 |
+|---|---|---|---|
+| 低价图文一次完成 | 正文配图、截图、多图笔记 | GPT-6 Luna、Mistral Small 4，及下表国产低价候选 | 未读取音轨时不能判断音乐情绪 |
+| 原生音画联合理解 | 口播、音乐、节奏、画面共同传意的视频 | Gemini 3.5 Flash-Lite及国产Omni类接口 | “视频输入”不能自动当作音轨支持 |
+| 质量升级对照 | 模糊小字、多图矛盾、复杂审美、跨模态证据 | Gemini 3.8 Flash、Claude Sonnet 5、GPT-6 Sol | 不因旗舰名号就全库使用 |
+| 专用OCR/ASR后复用 | 长图文字归档、已有转录需求、反复更换标签 | PaddleOCR、Mistral OCR、Step ASR、Voxtral | OCR不理解穿搭审美；ASR不理解BGM和镜头 |
+| 开放权重/自托管 | 希望数据留本地、长期持续处理 | Ministral、Gemma、GLM视觉、InternVL系列 | 开源不是零成本；须另核硬件、许可证和运维 |
+| 视频专用分析 | 时间片段、事件定位、重复检索 | TwelveLabs Pegasus、Reka Vision | 不是所有图文帖的默认处理器 |
+
+**建议的小样组合，而非采购决定：**图文选两个不同体系的低价模型；音画选两个明确支持音轨的模型；再留一个较强模型处理同样的困难样本。先用约5款收敛，其他作为备选。这样既拓宽范围，也避免把20款全部跑一遍增加评测工作。
+
+先完成“媒体字段分流＋一次产出内容卡”的对照，再决定是否值得做专门路由器。只有标题/正文的廉价文本路线更适合已有可信内容卡的重分类，不能默认用来首次理解全部图片。
+
+<a id="official-prices"></a>
+
+## 9. 官方模型与价格
+
+价格核查日为2026-09-23。表中按 **每百万token、未命中缓存、普通短上下文输入/输出** 标价；人民币与美元分表，不自行换汇。输出可能包含计费思考token。图片和视频的编码量不同，不能只按输入单价宣布谁最省钱。列表不是所有在售型号清单。
+
+### 9.1 国际通用模型（USD）
+
+| 模型 / API ID | 已核实输入能力 | 标准输入 / 输出 | Batch输入 / 输出 | 对本项目的意义 |
+|---|---|---:|---:|---|
+| GPT-6 Luna `gpt-6-luna` | 文本、图片；无原生音视频 | $0.10 / $0.50 | $0.05 / $0.25 | 低价图文主线候选 |
+| GPT-6 Sol `gpt-6-sol` | 文本、图片；无原生音视频 | $2 / $10 | $1 / $5 | 复杂图文小样基线 |
+| Gemini 3.5 Flash-Lite `gemini-3.5-flash-lite` | 文本、图片、视频、音频、PDF | $0.30 / $2.50 | $0.15 / $1.25 | 四类输入同价，原生音画候选 |
+| Gemini 3.8 Flash `gemini-3.8-flash` | 文本、图片、视频、音频、PDF | $0.75 / $3.75 | $0.375 / $1.875 | 此价至2026-12-31，复杂音画对照 |
+| Claude Haiku 4.5 `claude-haiku-4-5-20251001` | 文本、图片；未提供原生音视频 | $1 / $5 | $0.50 / $2.50 | Claude体系低价对照，非市场最低价 |
+| Claude Sonnet 5 `claude-sonnet-5` | 文本、图片；未提供原生音视频 | $2 / $10 | $1 / $5 | 解释性标签、多图语义对照 |
+| Mistral Small 4 `mistral-small-2603` | 文本、图片；未核实原生音视频 | $0.15 / $0.60 | $0.075 / $0.30 | 低价视觉、开放权重路线 |
+| Ministral 3 3B `ministral-3b-2512` | 文本、图片；未核实原生音视频 | $0.10 / $0.10 | $0.05 / $0.05 | 低成本下限对照，中文小字需实测 |
+| Grok 4.3 `grok-4.3` | 文本、图片；模型卡非原生音视频 | $1.25 / $2.50 | $1 / $2 | 厂商多样性对照，Batch仅八折 |
+
+以上均有结构化输出支持，但仍须验证具体接口的Schema子集、拒绝响应和截断情况。来源：[OpenAI价格](https://developers.openai.com/api/docs/pricing)、[Luna规格](https://developers.openai.com/api/docs/models/gpt-6-luna)、[Sol规格](https://developers.openai.com/api/docs/models/gpt-6-sol)；[Gemini价格](https://ai.google.dev/gemini-api/docs/pricing)、[Flash-Lite](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite)、[Flash 3.8](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash)；[Claude型号](https://platform.claude.com/docs/en/models/overview)、[价格](https://platform.claude.com/docs/en/about-claude/pricing)、[结构化输出](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)；[Mistral价格](https://docs.mistral.ai/inference/pricing)、[Small 4](https://docs.mistral.ai/models/mistral-small-4-0-26-03)、[Ministral 3B](https://docs.mistral.ai/models/ministral-3-3b-25-12)、[Batch](https://docs.mistral.ai/studio/batch-processing)；[Grok 4.3](https://docs.x.ai/developers/models/grok-4.3)、[价格](https://docs.x.ai/developers/pricing)。
+
+价格条件与排除理由：
+
+- Gemini 3.8在2027-01-01恢复标准$1.50/$7.50、Batch $0.75/$3.75，不能按促销价做永久预算。旧Gemini 2.5 Flash-Lite仍有$0.10/$0.40报价（音频输入$0.30），但投用前应核生命周期。
+- Sonnet 5原定涨价已取消，$2/$10是当前标准价；不能沿用旧涨价预期。
+- Grok最新4.7为$2/$6，且不支持Batch；不是“越新越适合批量标签”。本表保留较便宜的4.3。4.3达到200K输入后全请求按$2.50/$5计费。[4.7规格](https://docs.x.ai/developers/models/grok-4.7)
+- GPT-6 Luna/Sol缓存读取为标准输入的10%，写入为1.25倍；超过272K输入，全请求输入/缓存价翻倍、输出价1.5倍。独特图片通常不能假定命中跨帖缓存；区域附加费未包含。
+- Mistral Small 4总参数119B，不能用激活参数少就推断普通Mac适合本地运行。本轮未评估用户硬件。
+
+### 9.2 国内通用模型（CNY，人民币）
+
+| 模型 / API ID | 确认能力与限制 | 输入 / 输出（¥/百万token） | 条件与项目定位 |
+|---|---|---:|---|
+| Qwen `qwen3.7-flash-2026-07-15` | 图文、视频画面；不当作原生音轨理解 | ¥0.20 / ¥0.80 | 北京≤32K；明确Batch半价；低价图文基线 |
+| Qwen `qwen3.8-omni-flash` | 文字、图片、音频、视频 | ¥0.80 / ¥2.70 | 北京，各输入模态统一；缓存¥0.10；音画候选 |
+| Doubao Seed 2.0 Mini | 全模态候选；具体部署版本仍需确认 | 非音频¥0.20、音频¥3 / 输出¥2 | ≤32K；常规价，不擅自叠Batch折扣 |
+| Doubao Seed 2.0 Lite | 全模态候选；具体部署版本仍需确认 | 非音频¥0.60、音频¥9 / 输出¥3.60 | ≤32K；音画升级对照，不是Seedance视频生成模型 |
+| DeepSeek V4.1 Flash `deepseek-flash` | 图像理解、JSON输出；未确认原生音视频直入 | 空闲¥1 / ¥4；高峰¥2 / ¥8 | 缓存分别¥0.02 / ¥0.04；图文对照 |
+| GLM `glm-5.3-flash` | 多图、视频、文件、1M、JSON；不能关闭思考 | ¥0.80 / ¥2.80 | 缓存¥0.23；值得加入首轮图文对照 |
+| GLM `glm-5.3-flashx` | 同家族加速版本 | ¥2 / ¥7 | 缓存¥0.57；离线任务不优先为延迟加价 |
+| `MiniMax-M3` | 原生图像/视频、1M；音轨/严格Schema未核实 | ¥2.10 / ¥8.40 | 标准服务≤512K，官方标永久五折；缓存¥0.42 |
+| Step `step-3.7-flash` | 图像/视频、256K；未证实能听视频音轨 | ¥1.35 / ¥8.10 | 缓存¥0.27；不同模型家族的视觉对照 |
+| Kimi `kimi-k2.6` | 多图/视频、256K、JSON Mode、可关思考 | 未确认 | 官方动态价格表未展示行，不以第三方报价代填 |
+| ERNIE 4.5 Turbo VL | 视觉理解；准确接入ID待核 | ¥3 / ¥9 | Batch ¥1.20 / ¥3.60，即标准40% |
+| HY-Vision-2.0-Instruct | TokenHub视觉理解；准确接入ID待核 | ¥7.50 / ¥17.50 | 生态备选，不是当前低价首选 |
+
+来源与约束：
+
+- **Qwen**：[百炼价格](https://help.aliyun.com/zh/model-studio/model-pricing)、[视觉能力](https://help.aliyun.com/zh/model-studio/vision-model)、[Omni能力](https://help.aliyun.com/zh/model-studio/qwen3-8-omni-flash)。3.7 Flash北京32–256K为¥0.60/¥2.40，256K–1M为¥1.20/¥4.80。3.8 Flash本身为¥0.80/¥2.70，并非越新越便宜。Omni新加坡¥1.094/¥3.427，与北京不同。
+- **Seed**：[方舟价格](https://docs.volcengine.com/docs/ark/model-pricing?lang=zh)。当日浏览器读常规价：Mini在32–128K为非音频¥0.40、音频¥6、输出¥4；Lite为¥0.90、¥13.50、¥5.40。Mini/Lite的`260428`具体版本模态和Batch资格仍需模型页确认，所以不把型号后缀写成已可直接部署的契约。常规缓存价分别为非音频¥0.04/¥0.12、音频¥0.60/¥1.80，另有存储费¥0.017/百万token/小时。
+- **DeepSeek币种明确分开**：[中文官方](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)标上述人民币；[英文官方](https://api-docs.deepseek.com/quick_start/pricing/)另标USD：空闲$0.15/$0.60、高峰$0.30/$1.20。不是同一组数字随意换货币符号，也不是本文做汇率换算。高峰为北京时间工作日9–12、14–18点（不含中国法定节假日），其余空闲。V4-Pro-0813不支持视觉，不因Pro名称就放进图文首轮。
+- **GLM**：[能力](https://docs.bigmodel.cn/cn/guide/models/vlm/glm-5.3-flash)、[价表](https://docs.bigmodel.cn/cn/guide/start/pricing)。介绍提及限时半价，但价表当日展示¥0.80/¥2.80且未确认截止日，不再除二；该ID的Batch资格未确认。强制思考可能增加输出费用。
+- **MiniMax**：[实际输入接口](https://platform.minimax.cn/docs/api-reference/text-chat-openai)、[价表](https://platform.minimax.cn/docs/guides/pricing-paygo)。>512K标准价格翻倍；优先服务为标准1.5倍。ASR另¥2.50/小时，不将其生成音乐/TTS能力当作M3音轨理解。
+- **Step**：[3.7能力](https://platform.stepfun.com/docs/zh/guides/models/step-3.7-flash)、[价表](https://platform.stepfun.com/docs/zh/guides/pricing/details)。`stepaudio-2.5-asr`现价¥0.15/小时，是廉价口播转录候选，不覆盖BGM/镜头；`step-5-preview`支持图/视频及JSON Schema、1M上下文，但¥7/¥20，不作为全库默认。[Step 5](https://platform.stepfun.com/docs/zh/guides/models/step-5-preview)
+- **Kimi**：[K2.6](https://platform.kimi.com/docs/guide/kimi-k2-6-quickstart)、[K3](https://platform.kimi.com/docs/guide/kimi-k3-quickstart)、[价格入口](https://platform.kimi.com/docs/pricing/chat)。K3有1M和严格结构化输出，缓存写入按5分钟/1小时TTL另计；本轮价格抓取及浏览器均无价格行，保留未知。视频由关键帧组成，不能据此声称听懂音轨。
+- **文心/混元**：[千帆价格](https://cloud.baidu.com/doc/qianfan-docs/s/Jm8r1826a)、[TokenHub价格](https://cloud.tencent.com/document/product/1823/130055)。ERNIE5.1虽更新，但价格页在文本栏，未证实该入口全模态开放。混元[旧平台停止新购](https://cloud.tencent.cn/document/product/1729/97731)，不能沿用旧入口价格；较低价`youtu-vita`[2026-10-15将下线](https://cloud.tencent.com/announce/detail/2447)，不建议新接。
+
+JSON Mode、按提示输出JSON、严格JSON Schema不是同一能力。除已明确核实者，不宣称所有候选都支持严格Schema。
+
+### 9.3 视频与提取专用服务
+
+| 服务 | 官方价格与单位 | 能力与限制 | 项目定位 |
+|---|---|---|---|
+| TwelveLabs `pegasus1.5` Analyze | USD $1.75/视频小时＋$7.50/百万输出token | 画面、声音、文字联合理解，时间片段/结构化输出；直接分析无需预建索引；中文是官方“部分支持” | 时间定位的备选，不能预设中文效果优于通用模型 |
+| Reka Vision索引＋QA/tagging | USD $0.05/视频分钟索引＋$2/百万输出token；搜索另$0.005/次 | 索引路线按视频时长计费；Developer存储免费但30天后自动删除 | 重复检索/视频标签对照，不与一次问答token价混为一谈 |
+| Reka QuickTag | 官方输出价$2/百万token；非索引路径，不套上述索引费 | 小于30秒、无存储的轻量标签接口；字段范围与任意知识卡不同 | 极短视频元数据候选；总计费边界投用前再确认 |
+| Mistral `mistral-ocr-4-1` | USD $4/千页；带annotation $5/千页 | 版面、段落框、结构块和置信度；非审美理解模型 | 长图/文档可复用OCR |
+| Voxtral Mini Transcribe 2 | USD $0.003/分钟 | 语音转录，不是音画理解；中文准确率未测 | ASR价格参照 |
+
+来源：[TwelveLabs价格](https://www.twelvelabs.io/pricing)、[Pegasus能力与语言](https://docs.twelvelabs.io/docs/concepts/models/pegasus)、[版本发布](https://docs.twelvelabs.io/docs/get-started/release-notes)；[Reka价格](https://docs.reka.ai/vision/pricing)、[QuickTag限制](https://docs.reka.ai/vision/api-reference/metadata-tagging/quick-tag-v-1-qa-quicktag-post)；[Mistral OCR](https://docs.mistral.ai/models/ocr-4-1)、[转录价格](https://docs.mistral.ai/inference/pricing)。TwelveLabs的Marengo是检索/embedding路线，不应拿其embedding报价当Pegasus摘要价格。
+
+具体视频机制例子：Gemini官方静态模式默认1 FPS，另处理音轨和时间戳；新款Flash也支持动态查看帧和音频的agentic视频理解。官方静态近似量约100 token/秒（低分辨率）、300 token/秒（高分辨率），不是所有厂商通用常数。以Flash-Lite $0.30/百万输入粗算，一小时分别约$0.108/$0.324输入费，另加提示、输出、重试；这是同一服务下的机制示意，不是全库实价，也不能断言与Pegasus读取的信息量/准确率相同。[Gemini视频说明](https://ai.google.dev/gemini-api/docs/video-understanding)
+
+<a id="hosted-prices"></a>
+
+## 10. 开放权重、托管与中转
+
+开放权重、自部署、第三方托管和转发原厂API是不同路线。以下为公开目录列出的价格，未通过用户账户实调；模型卡支持的媒体不保证每个托管端点都支持。**固定模型版本、provider和媒体端点后，才可比较实际账单。**
+
+### 10.1 新增开放模型路线
+
+| 候选 | 媒体能力/适用性 | 价格或部署边界 | 一手资料 |
+|---|---|---|---|
+| Ministral 3 8B `ministral-8b-2512` | 图文；中文小字效果待测 | 官方USD $0.15/$0.15；Apache 2.0；不代表本机已能运行 | [模型卡](https://docs.mistral.ai/models/ministral-3-8b-25-12) |
+| GLM-4.6V / `glm-4.6v-flash` | 图片/视频视觉；无已核原生音频 | Z.ai国际完整款USD $0.30/$0.90；Flash免费；FlashX $0.04/$0.40。免费不等于无限配额 | [官方价](https://docs.z.ai/guides/overview/pricing)、[Flash权重](https://huggingface.co/zai-org/GLM-4.6V-Flash) |
+| Gemma 4 31B `google/gemma-4-31b-it` | 图片/抽帧视频；31B不接音频，不能套其他变体能力 | OpenRouter的DeepInfra Turbo报价USD $0.09/$0.34；最便宜路由是否支持所需媒体待验证 | [Google模型卡](https://ai.google.dev/gemma/docs/core/model_card_4)、[托管价](https://openrouter.ai/google/gemma-4-31b-it) |
+| InternVL3.5 8B `OpenGVLab/InternVL3_5-8B` | 图文/OCR/抽帧视频；非原生音轨 | 未核到可靠托管报价，保留自部署候选；不能将241B成绩套给8B | [团队模型卡](https://huggingface.co/OpenGVLab/InternVL3_5-8B) |
+| Llama 4 Scout `meta-llama/llama-4-scout` | 图文；官方12种支持语言不含中文 | OpenRouter DeepInfra USD $0.10/$0.30，Novita $0.18/$0.59；109B总参/17B活跃，不按17B估内存 | [Meta模型卡](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct)、[托管价](https://openrouter.ai/meta-llama/llama-4-scout) |
+| PaddleOCR-VL 1.5 / 1.6 | OCR/表格/公式/版面，不是通用标签模型 | 硅基`PaddlePaddle/PaddleOCR-VL-1.5`当前免费；1.6只核实开放权重，不能写成免费托管 | [1.5](https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.5)、[1.6](https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.6)、[硅基价格](https://siliconflow.cn/pricing) |
+| GLM-OCR | 文档文字提取；不能替代照片语义 | 智谱CNY ¥0.20/¥0.20；Z.ai国际USD $0.03/$0.03；具体OCR接口参数另核 | [国内价](https://docs.bigmodel.cn/cn/guide/start/pricing)、[国际价](https://docs.z.ai/guides/overview/pricing)、[模型卡](https://huggingface.co/zai-org/GLM-OCR) |
+
+Gemma图像可用不同视觉token预算，密集小字不能只用最低档；31B、E2B/E4B等变体的音频能力不同。InternVL官方示例按片段抽帧，不是视频逐帧全部观看。自部署尚未评估硬件、许可证适用范围、量化损失和运维成本，不做“本地更便宜”的确定判断。
+
+### 10.2 同型号直连与聚合价格（USD/百万token）
+
+| 型号 | 原厂输入 / 输出 / 缓存读 | OpenRouter具体上游输入 / 输出 / 缓存读 | 比较结论 |
+|---|---:|---|---|
+| Ministral 3 8B | $0.15 / $0.15 / $0.015 | Mistral Standard：$0.15 / $0.15 / $0.015；另有$0.165/$0.165路由 | 同上游标价相同，中转不天然更便宜 |
+| Mistral Small 4 | $0.15 / $0.60 / $0.015 | Mistral同价；Mistral EU $0.165/$0.66；Venice $0.1875/$0.75 | 不拿最低缓存均价冒充每条新帖价 |
+| GLM-4.6V | $0.30 / $0.90 / $0.05 | Z.ai同价；Novita $0.30/$0.90/$0.055 | 普通token同价，缓存/平台费用有差异 |
+
+来源：[Mistral官方](https://docs.mistral.ai/inference/pricing)、[Ministral聚合](https://openrouter.ai/mistralai/ministral-8b-2512)、[Small 4逐上游报价](https://openrouter.ai/mistralai/mistral-small-2603/pricing)、[Z.ai官方](https://docs.z.ai/guides/overview/pricing)、[GLM聚合](https://openrouter.ai/z-ai/glm-4.6v)。OpenRouter[当前定价](https://openrouter.ai/pricing)标准平台费5.5%、Business 8%；上述token价不是充值、税费和兑换后的最终总额。
+
+额外人民币托管对照：硅基中国站`zai-org/GLM-4.5V`为¥1/¥6；Z.ai国际同名款为USD $0.60/$1.80。币种、地域及实现不同，不直接比较数字大小。[硅基](https://siliconflow.cn/pricing)、[Z.ai](https://docs.z.ai/guides/overview/pricing)
+
+### 10.3 平台限制比最低标价更重要
+
+- **OpenRouter Batch**：部分模型/上游有约半价的24小时异步通道；图片只接受公网HTTP(S) URL，不接受base64/data URI；OpenAI、Anthropic、xAI、DeepInfra部分端点支持图片，但该批次通道的Mistral、Google、Together、Fireworks不支持图片，音视频输入均拒绝。不能将此扩展成各家原厂Batch限制，也不能为折扣擅自公开本地媒体。[官方规则](https://openrouter.ai/docs/batch-quickstart)
+- **Mistral原厂Batch**：公开五折；本轮未实调图片编码形式，表内折扣不表示所有图文请求已经跑通。[官方Batch](https://docs.mistral.ai/studio/batch-processing)
+- **硅基**：免费OCR仍有限速/容量条件；未核到所列视觉型号普遍Batch半价的依据。`GLM-4.6V`在硅基已下线，不能因为原厂/OpenRouter仍有就声称硅基可用；旧PaddleOCR-VL也已被新版本替换。[平台公告](https://docs.siliconflow.cn/docs/release-notes/overview)
+- **其他中转站**：本轮没有得到足够可复核的同版本、同模态价表，不列来历不明的充值折扣或群内报价。Together、Fireworks也未核到足够可比的竞争报价，不用旧型号凑表。后续若比较指定站点，应同时核来源路由、保留策略、失败退款、余额折算和媒体限制。
+
+<a id="plans"></a>
+
+## 11. Token Plan与订阅：按授权和有效额度比较
+
+不能笼统说“订阅都不包含API”，也不能把聊天/编程套餐当无人值守批处理额度。只有确认允许本任务、媒体可用、限速可接受，才进入成本比较；本轮未查看用户账户权益。
+
+| 方案 | 本轮核实的边界 | 对本项目的处理 |
+|---|---|---|
+| MiniMax Token Plan | Plus ¥49/月、Max ¥119/月、Ultra ¥469/月；5小时/周窗口，订阅Key与按量Key分开；补充积分目录价1000积分=¥7 | 面向个人交互，生产建议按量，高并发自动流量可能动态限速；未见全面禁止个人批处理，不自行补禁令 |
+| Google AI Pro / Ultra | Pro每月$10开发者抵扣；Ultra 20TB $40、30TB $100；须激活，可用于Gemini API | 是有限抵扣，不是无限API；按用户实际地区/权益确认 |
+| Mistral订阅 | 新规则跨Studio/API/Vibe共享monthly usage，超额可PAYG；Free公开$10月API额度 | Pro页面混有教育版额度分支，未确认映射，不报价不确定额度 |
+| Claude Pro/Max等 | 官方明确与API/Console分别计费 | 不把订阅当本项目API余额 |
+| GLM Coding Plan / Step Plan | 积分或Credits不等于token；脚本适用范围、具体额度映射未完整确认 | 暂不据月费推全库处理成本 |
+| OpenAI、Grok等订阅 | 本轮没有核到可直接抵本任务API的充分权益依据 | 仅按已核API单价比较，不推定含API余额 |
+
+来源：[MiniMax FAQ](https://platform.minimax.cn/docs/token-plan/faq)、[Google权益](https://developers.google.com/program/plans-and-pricing)及[API抵扣说明](https://blog.google/innovation-and-ai/technology/developers-tools/gdp-premium-ai-pro-ultra/)、[Mistral订阅](https://docs.mistral.ai/admin/billing-usage/subscriptions)及[报价](https://mistral.ai/pricing/)、[Claude说明](https://support.claude.com/en/articles/9876003-i-have-a-paid-claude-subscription-pro-max-team-or-enterprise-plans-why-do-i-have-to-pay-separately-to-use-the-claude-api-and-console)、[GLM模型/Plan说明](https://docs.bigmodel.cn/cn/guide/models/vlm/glm-5.3-flash)、[Step Plan](https://platform.stepfun.com/step-plan)、[Grok账单](https://docs.x.ai/console/billing)。
+
+## 12. 当前建议与尚未解决的问题
+
+建议首轮小样以 **GPT-6 Luna、GLM-5.3-Flash** 作图文跨厂商对照，以 **Gemini 3.5 Flash-Lite、Qwen3.8-Omni-Flash** 作音画对照，留 **Gemini 3.8 Flash或Claude Sonnet 5** 一款作为困难样本基线。若优先开放权重，将Mistral Small 4加入或替换一个图文候选；若重中文低价，可增加Qwen3.7 Flash，而不必重新限于原来的三家。此顺序基于能力覆盖和报价，不是实测排名。
+
+尚未解决：各模型真实中文小字/多图关联/审美标签质量、输出Schema可靠性、每帖实际视觉与思考token、视频抽样遗漏、重试率、端点地区可用性、部分套餐和动态价格空缺。下一步最有价值的是获授权后按第7节做同素材小样，而非继续罗列更多旗舰。本次完成公开研究与文档更新，未做实现、模型调用或全库处理。
