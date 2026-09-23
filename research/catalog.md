@@ -84,7 +84,7 @@
 
 | 问题或对象 | 范围与入口 |
 |---|---|
-| 帖子理解模型与处理成本 | [AI 分类与模型选型](../docs/explorations/ai-classification.md)：统一保存本地字段、官方及中转报价、Token Plan、分层成本和视频机制；2026-09-19核查，未做付费模型评测。 |
+| 帖子理解与处理成本 | [AI 内容理解与分类方案](../docs/explorations/ai-classification.md)：本地字段、分层与视频机制，跨厂商模型及官方/托管价格、套餐边界（2026-09-23重新核查）；未做付费模型评测。 |
 | 只凭帖子 ID 付费批量导出          | [供应商与成本对照](topics/paid-note-id-export-services.md)：2026-09-14 Rnote、Galaxy、TikHub、Apify 等公开参数与价格核查；区分媒体 ZIP、结构化数据和完整本地归档，该次核查未采购或实测新供应商；后续落盘实现见 [note-library](../prototypes/note-library/README.md)。                                                    |
 | 按含义找回帖子与知识库            | [语义检索、RAG 与 LLM Wiki](topics/semantic-post-library.md)：2026-09-13 原始论文与官方文档研究；讨论无共同关键词的关联检索、多模态覆盖和召回评估，未实现或选定模型。                                                                       |
 | 项目启发                          | [用户目标与候选思路](topics/project-inspirations.md)：已有清单与 Cookie 驱动后台导出，持续记录成功、失败和待处理项；并保留后台浏览器直接保存响应、Azure 临时代理等思路。这些新增流程尚未实施，不评级。                                      |
